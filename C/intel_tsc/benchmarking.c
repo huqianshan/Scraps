@@ -25,11 +25,11 @@ uint64_t tsc_overhead;
 uint64_t clk_overhead;
 
 // get the current time in nanoseconds
-inline uint64_t clock_ns()
+static uint64_t clock_ns()
 {
   struct timespec t;
   clock_gettime(CLOCK, &t);
-  return (uint64_t) t.tv_sec * SS + t.tv_nsec * NS;
+  return (uint64_t)t.tv_sec * SS + t.tv_nsec * NS;
 }
 
 // measure the cost to call `clock_gettime` for the specified clock
@@ -37,10 +37,11 @@ uint64_t clock_overhead()
 {
   int i;
   struct timespec t;
-  uint64_t  t0, t1, overhead = ~0;
+  uint64_t t0, t1, overhead = ~0;
 
   // we run N times and take the min
-  for (i = 0; i < N; i++) {
+  for (i = 0; i < N; i++)
+  {
     t0 = bench_start();
     clock_gettime(CLOCK, &t);
     t1 = bench_end();
@@ -54,12 +55,17 @@ uint64_t clock_overhead()
 // recursive fibonacci calculation
 unsigned int fib(unsigned int n)
 {
-  if (n == 0) {
+  if (n == 0)
+  {
     return 0;
-  } else if (n == 1) {
+  }
+  else if (n == 1)
+  {
     return 1;
-  } else {
-    return fib(n-1) + fib(n-2);
+  }
+  else
+  {
+    return fib(n - 1) + fib(n - 2);
   }
 }
 
@@ -70,13 +76,14 @@ void bench_fib()
   int i;
 
   t0 = bench_start();
-  for (i = 0; i < N; i++) {
+  for (i = 0; i < N; i++)
+  {
     fib(10);
   }
   t1 = bench_start();
 
   printf("Fib (10): %" PRIu64 " clock cycles\n",
-    (t1 - t0 - tsc_overhead) / N);
+         (t1 - t0 - tsc_overhead) / N);
 }
 
 // evaluate cost of a simple as possible system call
@@ -86,13 +93,14 @@ void bench_syscall(void)
   int i;
 
   t0 = bench_start();
-  for (i = 0; i < N; i++) {
+  for (i = 0; i < N; i++)
+  {
     syscall(SYS_getpid);
   }
   t1 = bench_end();
 
   printf("System call (getpid): %" PRIu64 " cycles\n",
-    (t1 - t0 - tsc_overhead) / N);
+         (t1 - t0 - tsc_overhead) / N);
 }
 
 // compare using tsc and `clock_gettime` for benchmarking code.
@@ -105,7 +113,8 @@ void bench_tsc_clock(unsigned int fibn)
   int i;
 
   t0 = bench_start();
-  for (i = 0; i < N; i++) {
+  for (i = 0; i < N; i++)
+  {
     fib(fibn);
   }
   t1 = bench_start();
@@ -113,7 +122,8 @@ void bench_tsc_clock(unsigned int fibn)
   printf("TSC  : %" PRIu64 " ns\n", cycles_to_ns((t1 - t0 - tsc_overhead) / N));
 
   t0 = clock_ns();
-  for (i = 0; i < N; i++) {
+  for (i = 0; i < N; i++)
+  {
     fib(fibn);
   }
   t1 = clock_ns();
@@ -146,7 +156,6 @@ void bench_sleep(void)
   printf("\n=> TSC Vs. Clock call-cost\n");
   printf("TSC  : %" PRIu64 " cycles\n", tsc_overhead);
   printf("CLOCK: %" PRIu64 " cycles\n\n", clk_overhead);
-
 }
 
 int main(void)
@@ -166,4 +175,3 @@ int main(void)
 
   return 0;
 }
-
