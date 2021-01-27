@@ -1,0 +1,8 @@
+tsc1
+tsc2
+tsc3
+*.o
+*.cmd
+eval_clocks
+tsc_user
+using_tsc
