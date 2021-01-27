@@ -12,21 +12,30 @@
 
 static inline void _sync_tsc(void)
 {
-  asm volatile("cpuid" : : : "%rax", "%rbx", "%rcx", "%rdx");
+  asm volatile("cpuid"
+               :
+               :
+               : "%rax", "%rbx", "%rcx", "%rdx");
 }
 
 static inline uint64_t _rdtsc(void)
 {
   unsigned a, d;
-  asm volatile("rdtsc" : "=a" (a), "=d" (d) : : "%rbx", "%rcx");
-  return ((uint64_t) a) | (((uint64_t) d) << 32);
+  asm volatile("rdtsc"
+               : "=a"(a), "=d"(d)
+               :
+               : "%rbx", "%rcx");
+  return ((uint64_t)a) | (((uint64_t)d) << 32);
 }
 
 static inline uint64_t _rdtscp(void)
 {
   unsigned a, d;
-  asm volatile("rdtscp" : "=a" (a), "=d" (d) : : "%rbx", "%rcx");
-  return ((uint64_t) a) | (((uint64_t) d) << 32);
+  asm volatile("rdtscp"
+               : "=a"(a), "=d"(d)
+               :
+               : "%rbx", "%rcx");
+  return ((uint64_t)a) | (((uint64_t)d) << 32);
 }
 
 static inline uint64_t bench_start(void)
@@ -69,7 +78,8 @@ static uint64_t measure_tsc_overhead(void)
   uint64_t t0, t1, overhead = ~0;
   int i;
 
-  for (i = 0; i < TSC_OVERHEAD_N; i++) {
+  for (i = 0; i < TSC_OVERHEAD_N; i++)
+  {
     t0 = bench_start();
     asm volatile("");
     t1 = bench_end();
@@ -101,7 +111,7 @@ http://lxr.free-electrons.com/source/arch/x86/kernel/tsc.c?v=2.6.31#L399
 Linux runs a calibration phase where it uses some hardware timers and checks
 how many TSC cycles occur in 50ms.
 */
-#define TSC_FREQ_MHZ 3500
+#define TSC_FREQ_MHZ 2593
 
 static inline uint64_t cycles_to_ns(uint64_t cycles)
 {

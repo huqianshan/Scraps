@@ -51,6 +51,7 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-# vscode cmake files
+# vscode and cmakelists
 build/*
 bin/*
+.vscode/*

@@ -11,6 +11,7 @@
 #include <sys/time.h>
 
 #include "tsc.h"
+//#include "../gcc/assembly.h"
 
 #define NS 1
 #define US 1000
@@ -54,6 +55,7 @@ uint64_t clock_overhead()
 
 // recursive fibonacci calculation
 unsigned int fib(unsigned int n)
+// void fib(unsigned int n)
 {
   if (n == 0)
   {
@@ -67,6 +69,7 @@ unsigned int fib(unsigned int n)
   {
     return fib(n - 1) + fib(n - 2);
   }
+  //add_func();
 }
 
 // evaluate cost of recursive fibonacci calculation
