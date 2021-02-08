@@ -88,7 +88,12 @@ static inline uint8_t tas_uint8(volatile uint8_t *addr)
 #define LOCK_RESIZE 2
 
 std::mutex resize_bucket_num_mutex;
-p<uint64_t> resize_bucket_num; //自己增加的，初始值为最旧表的总bucket数，为0时表示多线程协同扩容完成，每个扩容线程每次取固定数量的bucket进行扩容，多个扩容线程可以同时进行扩容操作。
+/*
+自己增加的，初始值为最旧表的总bucket数
+为0时表示多线程协同扩容完成，
+每个扩容线程每次取固定数量的bucket进行扩容
+多个扩容线程可以同时进行扩容操作。*/
+pmem::obj::p<uint64_t> resize_bucket_num;
 
 namespace pmem
 {
@@ -778,80 +783,78 @@ namespace pmem
 
                     return size;
                 }
-#if 0
-    size_type
-    ht_status(bool is_increase, bool just_print
-    )
-    {
-	    pool_base pop = get_pool_base();
-	    if (try_lock(pop, &status_lock) && !is_increase)
-            return 0;
-
-		clht_meta *m = static_cast<clht_meta  *>(meta(my_pool_uuid));//是否要拷贝操作
-	    clht_hashtable_s *ht_ptr = m->ht.get_address(my_pool_uuid);
-        difference_type n_buckets = (difference_type)ht_ptr->num_buckets;
-        bucket_s *bucket = nullptr;
-        size_type size = 0;
-        int expands = 0;
-        int expands_max = 0;
-
-        for (difference_type idx = 0; idx < n_buckets; idx++)
-        {
-            bucket = &ht_ptr->table[idx];
-
-            int expands_cont = -1;
-            expands--;
-            do
-            {
-                expands_cont++;
-                expands++;
-                for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
+#if 1
+                size_type
+                ht_status(bool is_increase, bool just_print)
                 {
-                    if (bucket->slots[j] != nullptr)
-                        size++;
+                    pool_base pop = get_pool_base();
+                    if (try_lock(pop, &status_lock) && !is_increase)
+                        return 0;
+
+                    clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid)); //是否要拷贝操作
+                    clht_hashtable_s *ht_ptr = m->ht.get_address(my_pool_uuid);
+                    difference_type n_buckets = (difference_type)ht_ptr->num_buckets;
+                    bucket_s *bucket = nullptr;
+                    size_type size = 0;
+                    int expands = 0;
+                    int expands_max = 0;
+
+                    for (difference_type idx = 0; idx < n_buckets; idx++)
+                    {
+                        bucket = &ht_ptr->table[idx];
+
+                        int expands_cont = -1;
+                        expands--;
+                        do
+                        {
+                            expands_cont++;
+                            expands++;
+                            for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
+                            {
+                                if (bucket->slots[j] != nullptr)
+                                    size++;
+                            }
+
+                            bucket = bucket->next.get_address(my_pool_uuid);
+                        } while (unlikely(bucket != nullptr));
+
+                        if (expands_cont > expands_max)
+                            expands_max = expands_cont;
+                    }
+
+                    double full_ratio = 100.0 * size / (n_buckets * ENTRIES_PER_BUCKET);
+
+                    if (just_print)
+                    {
+                        printf("[STATUS-%02d] #bu: %7zu / #elems: %7zu / full%%: %8.4f%% / expands: %4d / max expands: %2d\n",
+                               99, n_buckets, size, full_ratio, expands, expands_max);
+                    }
+                    else
+                    {
+                        if (full_ratio > 0 && full_ratio < CLHT_PERC_FULL_HALVE) //loadfactor<5%
+                        {
+                            ht_resize_pes(false /* is_increase */, (size_t)33); //调用ht_resize_pes函数
+                        }
+                        else if ((full_ratio > 0 && full_ratio > CLHT_PERC_FULL_DOUBLE) || expands_max > CLHT_MAX_EXPANSIONS || is_increase)
+                        {
+                            uint64_t inc_by = (uint64_t)(full_ratio / CLHT_OCCUP_AFTER_RES); //inc_by增长比例，后面需要变成2的n次方。
+                            int inc_by_pow2 = pow2roundup(inc_by);
+
+                            if (inc_by_pow2 == 1)
+                            {
+                                inc_by_pow2 = 2;
+                            }
+                            int ret = ht_resize_pes(true /* is_increase */,
+                                                    (size_t)inc_by_pow2); //pes代表啥意思？
+                            // return if crashed
+                            if (ret == -1)
+                                return 0;
+                        }
+                    }
+
+                    unlock(pop, &status_lock);
+                    return size;
                 }
-
-                bucket = bucket->next.get_address(my_pool_uuid);
-            } while (unlikely(bucket != nullptr));
-
-            if (expands_cont > expands_max)
-                expands_max = expands_cont;
-        }
-
-        double full_ratio = 100.0 * size / (n_buckets * ENTRIES_PER_BUCKET);
-
-        if (just_print)
-        {
-            printf("[STATUS-%02d] #bu: %7zu / #elems: %7zu / full%%: %8.4f%% / expands: %4d / max expands: %2d\n",
-                    99, n_buckets, size, full_ratio, expands, expands_max);
-        }
-        else
-        {
-            if (full_ratio > 0 && full_ratio < CLHT_PERC_FULL_HALVE)//loadfactor<5%
-            {
-                ht_resize_pes(false/* is_increase */, (size_t)33);//调用ht_resize_pes函数
-            }
-            else if ((full_ratio > 0 && full_ratio > CLHT_PERC_FULL_DOUBLE)
-                || expands_max > CLHT_MAX_EXPANSIONS || is_increase)
-            {
-                uint64_t inc_by = (uint64_t)(full_ratio / CLHT_OCCUP_AFTER_RES);//inc_by增长比例，后面需要变成2的n次方。
-                int inc_by_pow2 = pow2roundup(inc_by);
-
-                if (inc_by_pow2 == 1)
-                {
-                    inc_by_pow2 = 2;
-                }
-                int ret = ht_resize_pes(true/* is_increase */,
-                    (size_t)inc_by_pow2);//pes代表啥意思？
-                // return if crashed
-                if (ret == -1)
-                    return 0;
-            }
-        }
-
-        unlock(pop, &status_lock);
-        return size;
-    }
 #endif
                 //多线程协同扩容
                 int ht_multithread_resize(bool is_increase, size_t by = 2)
@@ -889,7 +892,7 @@ namespace pmem
                                 for (difference_type idx = 0;
                                      idx < (difference_type)resize_bucket_num; idx++)
                                 {
-                                    bucket_s *bu_cur = &ht_old->table[idx];
+                                    bucket_s *bu_cur = &m->ht_oldest->table[idx]; // oldest? bug
                                     bucket_cpy(bu_cur, ht_new);
                                 }
                                 ht_new->table_prev = m->ht;
@@ -912,9 +915,9 @@ namespace pmem
                                 resize_bucket_num = resize_bucket_num - fixed_bucket_num;
                                 for (difference_type idx = resize_bucket_num; idx < resize_bucket_num + fixed_bucket_num; idx++)
                                 {
-                                    idx < (difference_type)resize_bucket_num; idx++)
+                                    //idx < (difference_type)resize_bucket_num; idx++) // what's the logic operation should be here? bug
                                     {
-                                        bucket_s *bu_cur = &ht_old->table[idx];
+                                        bucket_s *bu_cur = &m->ht_oldest->table[idx]; // oldest? bug
                                         bucket_cpy(bu_cur, ht_new);
                                     }
                                 }
@@ -939,101 +942,101 @@ namespace pmem
                     x |= x >> 32;
                     return x + 1;
                 }
-#if 0
-    /**
+#if 1
+                /**
      * Perform actual resizing. using multi-threaded collaborative concurrent resizing within a resize_lock.//lock-based multi-threaded concurrent resizing
      * 为了防止过度优化，关键是如何进行基于单lock的多线程并发扩容（是否可以实现---技术可行性方面）
     */
-    int
-    ht_resize_pes(bool is_increase, size_t by)
-    {
-	    pool_base pop = get_pool_base();
-		clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid));//静态类型转换并非是真正的拷贝操作。
-	    clht_hashtable_s *ht_old = m->ht.get_address(my_pool_uuid);
-        if (try_lock(pop, &resize_lock))
-            return 0;
+                int
+                ht_resize_pes(bool is_increase, size_t by)
+                {
+                    pool_base pop = get_pool_base();
+                    clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid)); //静态类型转换并非是真正的拷贝操作。
+                    clht_hashtable_s *ht_old = m->ht.get_address(my_pool_uuid);
+                    if (try_lock(pop, &resize_lock))
+                        return 0;
 
-        size_t num_buckets_new;
-        if (is_increase)
-        {
-            /* num_buckets_new = CLHT_RATIO_DOUBLE * ht_old->num_buckets; */
-            num_buckets_new = by * ht_old->num_buckets;
-        }
-        else
-        {
+                    size_t num_buckets_new;
+                    if (is_increase)
+                    {
+                        /* num_buckets_new = CLHT_RATIO_DOUBLE * ht_old->num_buckets; */
+                        num_buckets_new = by * ht_old->num_buckets;
+                    }
+                    else
+                    {
 #if CLHT_HELP_RESIZE == 1
-            ht_old->is_helper = 0;
+                        ht_old->is_helper = 0;
 #endif
-            num_buckets_new = ht_old->num_buckets / CLHT_RATIO_HALVE;//这个是压缩表空间嘛？大小变为1/8！
-        }
+                        num_buckets_new = ht_old->num_buckets / CLHT_RATIO_HALVE; //这个是压缩表空间嘛？大小变为1/8！
+                    }
 
-        persistent_ptr<clht_hashtable_s> ht_tmp;
-        transaction::run(pop, [&] {
-            // A transaction is required as the constructor of clht_hashtable_s
-            // invokes "make_persistent".
-            ht_tmp = make_persistent<clht_hashtable_s>(num_buckets_new);//以事务的方式进行临时的扩容的散列表构建！保证一致性。
-        });
+                    persistent_ptr<clht_hashtable_s> ht_tmp;
+                    transaction::run(pop, [&] {
+                        // A transaction is required as the constructor of clht_hashtable_s
+                        // invokes "make_persistent".
+                        ht_tmp = make_persistent<clht_hashtable_s>(num_buckets_new); //以事务的方式进行临时的扩容的散列表构建！保证一致性。
+                    });
 
-        clht_hashtable_s *ht_new = ht_tmp.get();
-        ht_new->version = ht_old->version + 1;//以版本化方式保证散列表更新的一致性。这里的ht_new和ht_old是否需要同meta进行联系。
+                    clht_hashtable_s *ht_new = ht_tmp.get();
+                    ht_new->version = ht_old->version + 1; //以版本化方式保证散列表更新的一致性。这里的ht_new和ht_old是否需要同meta进行联系。
 /*
 * 以下这部分是多线程并行扩容的关键部件！
 */
 #if CLHT_HELP_RESIZE == 1
-        ht_old->table_tmp.off = ht_tmp.raw().off;
-        pop.persist(&ht_old->table_tmp.off, sizeof(clht_hashtable_ptr_t));
+                    ht_old->table_tmp.off = ht_tmp.raw().off;
+                    pop.persist(&ht_old->table_tmp.off, sizeof(clht_hashtable_ptr_t));
 
-        for (difference_type idx = 0;
-            idx < (difference_type)ht_old->num_buckets; idx++)
-        {
-            bucket_s *bu_cur = &ht_old->table[idx];
-            int ret = bucket_cpy(bu_cur, ht_new);
-            /* reached a point where the helper is handling */
-            if (ret == -1)
-                return -1;
+                    for (difference_type idx = 0;
+                         idx < (difference_type)ht_old->num_buckets; idx++)
+                    {
+                        bucket_s *bu_cur = &ht_old->table[idx];
+                        int ret = bucket_cpy(bu_cur, ht_new);
+                        /* reached a point where the helper is handling */
+                        if (ret == -1)
+                            return -1;
 
-            if (!ret)
-                break;
-        }
+                        if (!ret)
+                            break;
+                    }
 
-        if (is_increase && ht_old->is_helper != 1)	/* there exist a helper */
-        {
-            while (ht_old->helper_done != 1)
-                atomic_backoff(); //阻塞以等待完成！
-        }
+                    if (is_increase && ht_old->is_helper != 1) /* there exist a helper */
+                    {
+                        while (ht_old->helper_done != 1)
+                            atomic_backoff(); //阻塞以等待完成！
+                    }
 #else
-        for (difference_type idx = 0;
-            idx < (difference_type)ht_old->num_buckets; idx++)
-        {
-            bucket_s *bu_cur = &ht_old->table[idx];
-            int ret = bucket_cpy(bu_cur, ht_new);
-            if (ret == -1)//此处的返回值-1表示什么意思？
-                return -1;
-        }
+                    for (difference_type idx = 0;
+                         idx < (difference_type)ht_old->num_buckets; idx++)
+                    {
+                        bucket_s *bu_cur = &ht_old->table[idx];
+                        int ret = bucket_cpy(bu_cur, ht_new);
+                        if (ret == -1) //此处的返回值-1表示什么意思？
+                            return -1;
+                    }
 #endif
 
-        ht_new->table_prev = m->ht;
-        int ht_resize_again = 0;
-        if (ht_new->num_expands >= ht_new->num_expands_threshold)
-        {
-            ht_resize_again = 1;
-        }
+                    ht_new->table_prev = m->ht;
+                    int ht_resize_again = 0;
+                    if (ht_new->num_expands >= ht_new->num_expands_threshold)
+                    {
+                        ht_resize_again = 1;
+                    }
 
-        pop.drain();
+                    pop.drain();
 
-        // Switch to the new hash table
-        m->ht.off = ht_tmp.raw().off;
-        pop.persist(&m->ht.off, sizeof(clht_hashtable_ptr_t));
-        ht_old->table_new.off = ht_tmp.raw().off;
-        pop.persist(&ht_old->table_new.off, sizeof(clht_hashtable_ptr_t));
+                    // Switch to the new hash table
+                    m->ht.off = ht_tmp.raw().off;
+                    pop.persist(&m->ht.off, sizeof(clht_hashtable_ptr_t));
+                    ht_old->table_new.off = ht_tmp.raw().off;
+                    pop.persist(&ht_old->table_new.off, sizeof(clht_hashtable_ptr_t));
 
-        unlock(pop, &resize_lock);
+                    unlock(pop, &resize_lock);
 
-        if (ht_resize_again)
-		    ht_status(true /* is_increase */, false /* just_print */);
+                    if (ht_resize_again)
+                        ht_status(true /* is_increase */, false /* just_print */);
 
-	    return 1;
-    }
+                    return 1;
+                }
 #endif
 
                 int
@@ -1172,11 +1175,12 @@ namespace pmem
                 }
 
                 clht_meta_ptr_t meta;
+                unsigned thread_num;
                 //	p<uint64_t> resize_bucket_num;//自己增加的，初始值为最旧表的总bucket数，为0时表示多线程协同扩容完成，每个扩容线程每次取固定数量的bucket进行扩容，多个扩容线程可以同时进行扩容操作。
                 p<size_type> resize_threads_num = 2; //默认扩容线程数为2，可动态调整
 
                 p<size_type> work_threads_num; //指的是work_thread_num
-                p<std::atomic<bool>> run_expand_threads;
+                p<std::atomic<bool>> run_expand_thread;
                 //    clht_hashtable_ptr_t ht;
                 //    uint8_t next_cache_line[CACHE_LINE_SIZE - (sizeof(clht_hashtable_ptr_t))];
                 //    clht_hashtable_ptr_t ht_oldest;

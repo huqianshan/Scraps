@@ -32,79 +32,85 @@ namespace nvobj = pmem::obj;
 namespace
 {
 
-class key_equal {
-public:
-	template <typename M, typename U>
-	bool operator()(const M &lhs, const U &rhs) const
+	class key_equal
 	{
-		return lhs == rhs;
-	}
-};
-
-class string_hasher {
-	/* hash multiplier used by fibonacci hashing */
-	static const size_t hash_multiplier = 11400714819323198485ULL;
-
-public:
-	using transparent_key_equal = key_equal;
-
-	size_t operator()(const polymorphic_string &str) const
-	{
-		return hash(str.c_str(), str.size());
-	}
-
-	// size_t operator()(string_view str) const
-	// {
-	// 	return hash(str.data(), str.size());
-	// }
-
-private:
-	size_t hash(const char *str, size_t size) const
-	{
-		size_t h = 0;
-		for (size_t i = 0; i < size; ++i) {
-			h = static_cast<size_t>(str[i]) ^ (h * hash_multiplier);
+	public:
+		template <typename M, typename U>
+		bool operator()(const M &lhs, const U &rhs) const
+		{
+			return lhs == rhs;
 		}
-		return h;
-	}
-};
+	};
 
-using string_t = polymorphic_string;
-typedef nvobj::experimental::clht<string_t, string_t, string_hasher,
-	std::equal_to<string_t>>
-	persistent_map_type;
+	class string_hasher
+	{
+		/* hash multiplier used by fibonacci hashing */
+		static const size_t hash_multiplier = 11400714819323198485ULL;
 
-struct root {
-	nvobj::persistent_ptr<persistent_map_type> cons;
-};
+	public:
+		using transparent_key_equal = key_equal;
 
-enum class clht_op {
-	UNKNOWN,
-	INSERT,
-	READ,
+		size_t operator()(const polymorphic_string &str) const
+		{
+			return hash(str.c_str(), str.size());
+		}
 
-	MAX_OP
-};
+		// size_t operator()(string_view str) const
+		// {
+		// 	return hash(str.data(), str.size());
+		// }
 
-struct thread_queue {
-	string_t key;
-	clht_op operation;
-};
+	private:
+		size_t hash(const char *str, size_t size) const
+		{
+			size_t h = 0;
+			for (size_t i = 0; i < size; ++i)
+			{
+				h = static_cast<size_t>(str[i]) ^ (h * hash_multiplier);
+			}
+			return h;
+		}
+	};
 
-struct sub_thread {
-	uint32_t id;
-	uint64_t inserted;
-	uint64_t found;
-	uint64_t unfound;
-	uint64_t thread_num;
-	thread_queue *run_queue;
-	double *latency_queue;
-};
+	using string_t = polymorphic_string;
+	typedef nvobj::experimental::clht<string_t, string_t, string_hasher,
+									  std::equal_to<string_t>>
+		persistent_map_type;
 
-} /* Annoymous namespace */
+	struct root
+	{
+		nvobj::persistent_ptr<persistent_map_type> cons;
+	};
 
-int
-main(int argc, char *argv[])
+	enum class clht_op
+	{
+		UNKNOWN,
+		INSERT,
+		READ,
+
+		MAX_OP
+	};
+
+	struct thread_queue
+	{
+		string_t key;
+		clht_op operation;
+	};
+
+	struct sub_thread
+	{
+		uint32_t id;
+		uint64_t inserted;
+		uint64_t found;
+		uint64_t unfound;
+		uint64_t thread_num;
+		thread_queue *run_queue;
+		double *latency_queue;
+	};
+
+} // namespace
+
+int main(int argc, char *argv[])
 {
 	char *ptr = getenv("PMEM_WRITE_LATENCY_IN_NS");
 	if (ptr)
@@ -117,7 +123,8 @@ main(int argc, char *argv[])
 #endif
 
 	// parse inputs
-	if (argc != 3) {
+	if (argc != 3)
+	{
 		printf("usage: %s <pool_path> <load_file>\n", argv[0]);
 		exit(1);
 	}
@@ -160,11 +167,14 @@ main(int argc, char *argv[])
 	fprintf(fout, "inserted,capacity,load_factor\n");
 	printf("Load phase begins \n");
 
-	while (getline(&pbuf, &len, ycsb) != -1) {
-		if (strncmp(buf, "INSERT", 6) == 0) {//按size比较两个字符串的关系
+	while (getline(&pbuf, &len, ycsb) != -1)
+	{
+		if (strncmp(buf, "INSERT", 6) == 0)
+		{ //鎸塻ize姣旇緝涓や釜瀛楃涓茬殑鍏崇郴
 			string_t key(buf + 7, KEY_LEN);
 			auto ret = map->put(persistent_map_type::value_type(key, key), loaded);
-			if (!ret.found) {
+			if (!ret.found)
+			{
 				loaded++;
 				// if (loaded % 10000 == 0)
 				// 	std::cout << "[SUCCESS] inserted " << loaded
@@ -176,13 +186,15 @@ main(int argc, char *argv[])
 				if (loaded % 10000 == 0)
 				{
 					std::cout << "Load factor: "
-						<< (loaded - 1) * 1.0 / ret.capacity
-						<< " inserted: " << loaded
-						<< " capacity: " << ret.capacity << std::endl;
+							  << (loaded - 1) * 1.0 / ret.capacity
+							  << " inserted: " << loaded
+							  << " capacity: " << ret.capacity << std::endl;
 					fprintf(fout, "%ld,%ld,%f\n", loaded, ret.capacity,
-						(loaded - 1) * 1.0 / ret.capacity);
+							(loaded - 1) * 1.0 / ret.capacity);
 				}
-			} else {
+			}
+			else
+			{
 				break;
 			}
 		}
