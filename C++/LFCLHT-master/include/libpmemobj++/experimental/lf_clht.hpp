@@ -45,7 +45,7 @@ returns true if the comparison is successful and newval was written.
 NOTE: oldval will NOT be updated if the atomic operation fails.
 */
 #define CAS(ptr, oldval, newval) \
-	(__sync_bool_compare_and_swap(ptr, oldval, newval))
+    (__sync_bool_compare_and_swap(ptr, oldval, newval))
 
 //test-and-set uint8_t
 // set *addr to 0xFF and return the old value in addr
@@ -53,335 +53,338 @@ static inline uint8_t tas_uint8(volatile uint8_t *addr)
 {
     uint8_t oldval;
     __asm__ __volatile__("xchgb %0,%1"
-        : "=q"(oldval), "=m"(*addr)
-        : "0"((unsigned char) 0xff), "m"(*addr) : "memory");
-    return (uint8_t) oldval;
+                         : "=q"(oldval), "=m"(*addr)
+                         : "0"((unsigned char)0xff), "m"(*addr)
+                         : "memory");
+    return (uint8_t)oldval;
 }
 
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 #define ALIGNED(N) __attribute__((aligned(N)))
 
-#define CLHT_READ_ONLY_FAIL   1
-#define CLHT_HELP_RESIZE      1
-#define CLHT_PERC_EXPANSIONS  1
-#define CLHT_MAX_EXPANSIONS   24
-#define CLHT_PERC_FULL_DOUBLE 50	   /* % */
-#define CLHT_RATIO_DOUBLE     2
-#define CLHT_OCCUP_AFTER_RES  40
-#define CLHT_PERC_FULL_HALVE  5		   /* % */
-#define CLHT_RATIO_HALVE      8
-#define CLHT_MIN_CLHT_SIZE    8
-#define CLHT_DO_CHECK_STATUS  0
-#define CLHT_DO_GC            0
-#define CLHT_STATUS_INVOK     500000
-#define CLHT_STATUS_INVOK_IN  500000
-#define LOAD_FACTOR           2
+#define CLHT_READ_ONLY_FAIL 1
+#define CLHT_HELP_RESIZE 1
+#define CLHT_PERC_EXPANSIONS 1
+#define CLHT_MAX_EXPANSIONS 24
+#define CLHT_PERC_FULL_DOUBLE 50 /* % */
+#define CLHT_RATIO_DOUBLE 2
+#define CLHT_OCCUP_AFTER_RES 40
+#define CLHT_PERC_FULL_HALVE 5 /* % */
+#define CLHT_RATIO_HALVE 8
+#define CLHT_MIN_CLHT_SIZE 8
+#define CLHT_DO_CHECK_STATUS 0
+#define CLHT_DO_GC 0
+#define CLHT_STATUS_INVOK 500000
+#define CLHT_STATUS_INVOK_IN 500000
+#define LOAD_FACTOR 2
 
-#define CACHE_LINE_SIZE       64
-#define ENTRIES_PER_BUCKET    6
+#define CACHE_LINE_SIZE 64
+#define ENTRIES_PER_BUCKET 6
 //#define ENTRIES_PER_BUCKET    3
 
-
-#define LOCK_FREE             0
-#define LOCK_UPDATE           1
-#define LOCK_RESIZE           2
+#define LOCK_FREE 0
+#define LOCK_UPDATE 1
+#define LOCK_RESIZE 2
 
 std::mutex resize_bucket_num_mutex;
-p<uint64_t> resize_bucket_num;//×Ô¼ºÔö¼ÓµÄ£¬³õÊ¼ÖµÎª×î¾É±íµÄ×ÜbucketÊı£¬Îª0Ê±±íÊ¾¶àÏß³ÌĞ­Í¬À©ÈİÍê³É£¬Ã¿¸öÀ©ÈİÏß³ÌÃ¿´ÎÈ¡¹Ì¶¨ÊıÁ¿µÄbucket½øĞĞÀ©Èİ£¬¶à¸öÀ©ÈİÏß³Ì¿ÉÒÔÍ¬Ê±½øĞĞÀ©Èİ²Ù×÷¡£
-
+/*
+è‡ªå·±å¢åŠ çš„ï¼Œåˆå§‹å€¼ä¸ºæœ€æ—§è¡¨çš„æ€»bucketæ•°
+ä¸º0æ—¶è¡¨ç¤ºå¤šçº¿ç¨‹ååŒæ‰©å®¹å®Œæˆï¼Œ
+æ¯ä¸ªæ‰©å®¹çº¿ç¨‹æ¯æ¬¡å–å›ºå®šæ•°é‡çš„bucketè¿›è¡Œæ‰©å®¹
+å¤šä¸ªæ‰©å®¹çº¿ç¨‹å¯ä»¥åŒæ—¶è¿›è¡Œæ‰©å®¹æ“ä½œã€‚*/
+pmem::obj::p<uint64_t> resize_bucket_num;
 
 namespace pmem
 {
-namespace obj
-{
-namespace experimental
-{
-
-using namespace pmem::obj;
-
-
-template <typename Key, typename T, typename Hash = std::hash<Key>,
-	  typename KeyEqual = std::equal_to<Key>>
-class lfclht {
-public:
-	using key_type = Key;
-	using mapped_type = T;
-	using value_type = std::pair<const Key, T>;
-	using size_type = size_t;
-	using difference_type = ptrdiff_t;
-	using pointer = value_type *;
-	using const_pointer = const value_type *;
-	using reference = value_type &;
-	using const_reference = const value_type &;
-
-	using hasher = Hash;
-	using key_equal =
-		typename internal::key_equal_type<Hash, KeyEqual>::type;
-	using atomic_backoff = internal::atomic_backoff;//¹¦ÄÜÀàËÆÓÚmemory_pause()
-
-    struct bucket_s;
-    struct clht_hashtable_s;
-    struct ht_ts;//¸Ğ¾õÃ»ÓĞÓÃÆğÀ´£¬ts´ú±íÊ²Ã´
-	struct clht_meta;
-
-    using hv_type = size_t;
-	using partial_t = uint16_t; //×î¸ß2×Ö½ÚÎªfingerprints£¬²Î¿¼FPTreeºÍclevel hashing
-    using clht_lock_t = volatile uint8_t;//ËøÊÇÒ×Ê§ĞÔµÄ£¬·ÀÖ¹Ïß³ÌËÀµôºóÆäËûÏß³ÌÎŞ·¨·ÃÎÊ
-    using kv_ptr_t = detail::compound_pool_ptr<value_type>;
-    using bucket_ptr_t = detail::compound_pool_ptr<bucket_s>;
-    using clht_hashtable_ptr_t = detail::compound_pool_ptr<clht_hashtable_s>;
-    using ht_ts_ptr_t = detail::compound_pool_ptr<ht_ts>;
-    using clht_table_t = persistent_ptr<bucket_s[]>;
-	using clht_meta_ptr_t = detail::compound_pool_ptr<clht_meta>;
-	//partial_t for optane dc pmm
-	constexpr static size_type partial_ext_bits
-			= (sizeof(uint64_t) - sizeof(partial_t)) * 8;
-	
-    struct ret
+    namespace obj
     {
-	    bool found;
-	    difference_type bucket_idx;
-        uint8_t step;
-	    uint8_t slot_idx;
-        bool expanded;
-		uint64_t capacity;
-
-        ret(difference_type _bucket_idx, uint8_t _step, uint8_t _slot_idx,
-            size_type _expanded=false, uint64_t _cap=0)
-            : found(true), bucket_idx(_bucket_idx), step(_step),
-            slot_idx(_slot_idx), expanded(_expanded), capacity(_cap)
+        namespace experimental
         {
-        }
 
-        ret(bool _expanded, uint64_t _cap)
-            : found(false), bucket_idx(0), step(0), slot_idx(0),
-            expanded(_expanded), capacity(_cap)
-        {
-        }
+            using namespace pmem::obj;
 
-        ret(bool _found)
-            : found(_found), bucket_idx(0), step(0), slot_idx(0),
-            expanded(false), capacity(0)
-        {
-        }
-
-        ret()
-            : found(false), bucket_idx(0), step(0), slot_idx(0),
-            expanded(false), capacity(0)
-        {
-        }
-    };
-
-    struct ALIGNED(CACHE_LINE_SIZE) bucket_s
-    {
-	    //clht_lock_t lock;
-	    volatile uint32_t hops;//4 bytes
-	    kv_ptr_t slots[ENTRIES_PER_BUCKET];//ÏÂÒ»²½¼Æ»®¸Ä³É6slots/bucket
-	    bucket_ptr_t next;
-
-        bucket_s()
-        {
-            //lock = LOCK_FREE;
-            for (size_t j=0; j < ENTRIES_PER_BUCKET; j++)//rzxiao size_t j=0;
+            template <typename Key, typename T, typename Hash = std::hash<Key>,
+                      typename KeyEqual = std::equal_to<Key>>
+            class lfclht
             {
-                slots[j] = nullptr;
-            }
-            next = nullptr;
-        }
-	};
+            public:
+                using key_type = Key;
+                using mapped_type = T;
+                using value_type = std::pair<const Key, T>;
+                using size_type = size_t;
+                using difference_type = ptrdiff_t;
+                using pointer = value_type *;
+                using const_pointer = const value_type *;
+                using reference = value_type &;
+                using const_reference = const value_type &;
 
-	struct ALIGNED(CACHE_LINE_SIZE) clht_hashtable_s
-    {
-		union
-        {
-			struct
-            {
-				size_t num_buckets;
-				clht_table_t table;
-				size_t hash;
-				size_t version;
-				uint8_t next_cache_line[CACHE_LINE_SIZE -
-					(3 * sizeof(size_t)) - (sizeof(clht_table_t))];
-				clht_hashtable_ptr_t table_tmp;
-				clht_hashtable_ptr_t table_prev;
-				clht_hashtable_ptr_t table_new;
-				volatile uint32_t num_expands;
-				union {
-					volatile uint32_t num_expands_threshold;
-					uint32_t num_buckets_prev;
-				};
-				volatile int32_t is_helper;
-				volatile int32_t helper_done;
-				size_t version_min;
-			};
-			uint8_t padding[2 * CACHE_LINE_SIZE];
-		};
+                using hasher = Hash;
+                using key_equal =
+                    typename internal::key_equal_type<Hash, KeyEqual>::type;
+                using atomic_backoff = internal::atomic_backoff; //åŠŸèƒ½ç±»ä¼¼äºmemory_pause()
 
-		clht_hashtable_s(uint64_t n_buckets = 0) : num_buckets(n_buckets)
-        {
-            table = make_persistent<bucket_s[]>(num_buckets);
-            hash = num_buckets - 1;
-            version = 0;
-            table_tmp = nullptr;
-            table_new = nullptr;
-            table_prev = nullptr;
-            num_expands = 0;
-            num_expands_threshold = (CLHT_PERC_EXPANSIONS * num_buckets);//Ä¬ÈÏÀ©Õ¹µÄbucketÊı´ïµ½×ÜµÄbucketÊı1%½øĞĞÀ©Èİ²Ù×÷¡£
-            if (num_expands_threshold == 0)
-            {
-                num_expands_threshold = 1;
-            }
-            is_helper = 1;
-            helper_done = 0;
-        }
-	};
+                struct bucket_s;
+                struct clht_hashtable_s;
+                struct ht_ts; //æ„Ÿè§‰æ²¡æœ‰ç”¨èµ·æ¥ï¼Œtsä»£è¡¨ä»€ä¹ˆ
+                struct clht_meta;
 
-	struct ALIGNED(CACHE_LINE_SIZE) ht_ts
-    {
-		union
-        {
-			struct
-            {
-				size_t version;
-				clht_hashtable_ptr_t versionp;
-				int id;
-				ht_ts_ptr_t next;
-			};
-			uint8_t padding[CACHE_LINE_SIZE];
-		};
-	};
+                using hv_type = size_t;
+                using partial_t = uint16_t;           //æœ€é«˜2å­—èŠ‚ä¸ºfingerprintsï¼Œå‚è€ƒFPTreeå’Œclevel hashing
+                using clht_lock_t = volatile uint8_t; //é”æ˜¯æ˜“å¤±æ€§çš„ï¼Œé˜²æ­¢çº¿ç¨‹æ­»æ‰åå…¶ä»–çº¿ç¨‹æ— æ³•è®¿é—®
+                using kv_ptr_t = detail::compound_pool_ptr<value_type>;
+                using bucket_ptr_t = detail::compound_pool_ptr<bucket_s>;
+                using clht_hashtable_ptr_t = detail::compound_pool_ptr<clht_hashtable_s>;
+                using ht_ts_ptr_t = detail::compound_pool_ptr<ht_ts>;
+                using clht_table_t = persistent_ptr<bucket_s[]>;
+                using clht_meta_ptr_t = detail::compound_pool_ptr<clht_meta>;
+                //partial_t for optane dc pmm
+                constexpr static size_type partial_ext_bits = (sizeof(uint64_t) - sizeof(partial_t)) * 8;
 
-	struct clht_meta{
-		clht_hashtable_ptr_t ht;
-		clht_hashtable_ptr_t ht_oldest;
-		ht_ts_ptr_t version_list;
-		size_t version_min;
-		p<bool> is_resizing;
-		clht_meta()
-		{
-			ht = NULL;
-			ht_oldest = NULL;
-			version_list = NULL;
-			version_min = 0;
-			is_resizing = false;
-		}
-		clht_meta(const clht_hashtable_ptr_t &ht1, const clht_hashtable_ptr_t &ht_oldest1, 
-			const ht_ts_ptr_t &version_list1, size_t version_N, bool flag)
-		{
-			ht = ht1;
-			ht_oldest = ht_oldest1;
-			version_list = version_list1;
-			version_min = version_N;
-			is_resizing = flag;
-		}
-	};//½á¹¹ÌåºóÃæÍü¼Ç¼Ó·ÖºÅ";"Òı·¢³öÁËÕâÃ´¶àÎÊÌâÑ½;
-	
-	static partial_t
-	get_partial(hv_type hv)
-	{
-		constexpr static size_type shift_bits =
-			(sizeof(hv_type) - sizeof(partial_t)) * 8;
-		return (partial_t)((uint64_t)hv >> shift_bits);
-	}
+                struct ret
+                {
+                    bool found;
+                    difference_type bucket_idx;
+                    uint8_t step;
+                    uint8_t slot_idx;
+                    bool expanded;
+                    uint64_t capacity;
 
-    lfclht(uint64_t n_buckets):meta(make_persistent<clht_meta>().raw().off),
-		thread_num(0)
-    {
-        std::cout << "LF-CLHT n_buckets = " << n_buckets << std::endl;
+                    ret(difference_type _bucket_idx, uint8_t _step, uint8_t _slot_idx,
+                        size_type _expanded = false, uint64_t _cap = 0)
+                        : found(true), bucket_idx(_bucket_idx), step(_step),
+                          slot_idx(_slot_idx), expanded(_expanded), capacity(_cap)
+                    {
+                    }
 
-        // setup pool
-        PMEMoid oid = pmemobj_oid(this);
-        assert(!OID_IS_NULL(oid));
-        my_pool_uuid = oid.pool_uuid_lo;
-		clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid));//metaÔÚ·ÃÎÊÇ°±ØĞëÏÈ´´½¨£¬·ñÔò»á±¨¶Î´íÎó
-	    persistent_ptr<clht_hashtable_s> ht_tmp =
-            make_persistent<clht_hashtable_s>(n_buckets);
-        m->ht.off = ht_tmp.raw().off;
-//std::cout<<"lfclht constructor debug line 0" << std::endl;
-        resize_lock = LOCK_FREE;
-//        gc_lock = LOCK_FREE;
-        status_lock = LOCK_FREE;
-        m->version_list = NULL;//¸Ğ¾õÃ»ÓĞÓÃÆğÀ´Ñ½
-//std::cout<<"lfclht constructor debug line 1" << std::endl;
+                    ret(bool _expanded, uint64_t _cap)
+                        : found(false), bucket_idx(0), step(0), slot_idx(0),
+                          expanded(_expanded), capacity(_cap)
+                    {
+                    }
 
-        m->version_min = 0;
-        m->ht_oldest = m->ht;
-//std::cout<<"lfclht constructor debug line 2" << std::endl;
+                    ret(bool _found)
+                        : found(_found), bucket_idx(0), step(0), slot_idx(0),
+                          expanded(false), capacity(0)
+                    {
+                    }
 
-		m->is_resizing = false;
-//std::cout<<"lfclht constructor debug line 3" << std::endl;
-		//Ã»ÓĞ³Ö¾Ã»¯µÄ¸Ğ¾õ£¬²»»áÓĞÎÊÌâÂğ£¿
-		run_expand_thread.get_rw().store(true);//Ô­×Ó±äÁ¿´æ´¢storeÖ¸Áî£¬ĞŞ¸ÄÊ±²ÉÓÃget_rwº¯Êı
-    }
+                    ret()
+                        : found(false), bucket_idx(0), step(0), slot_idx(0),
+                          expanded(false), capacity(0)
+                    {
+                    }
+                };
 
-	bucket_ptr_t
-	clht_bucket_create_stats(pool_base &pop, clht_hashtable_s *ht_ptr,
-		clht_meta_ptr_t &m_copy)
-	{
-		clht_meta *m = static_cast<clht_meta *>(m_copy(my_pool_uuid));//added
-		persistent_ptr<bucket_s> tmp;
-		make_persistent_atomic<bucket_s>(pop, tmp);
-		if (__sync_add_and_fetch(&ht_ptr->num_expands, 1) >=
-            ht_ptr->num_expands_threshold)
-            m->is_resizing = true;  //ÊÇ·ñĞèÒª¸ü¸Ä£¿Èç¹ûÒª¸ü¸Ä£¬ÔõÃ´¸Ä£¿
-        return bucket_ptr_t(tmp.raw().off);
-    }
+                struct ALIGNED(CACHE_LINE_SIZE) bucket_s
+                {
+                    //clht_lock_t lock;
+                    volatile uint32_t hops;             //4 bytes
+                    kv_ptr_t slots[ENTRIES_PER_BUCKET]; //ä¸‹ä¸€æ­¥è®¡åˆ’æ”¹æˆ6slots/bucket
+                    bucket_ptr_t next;
 
-	/**
+                    bucket_s()
+                    {
+                        //lock = LOCK_FREE;
+                        for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++) //rzxiao size_t j=0;
+                        {
+                            slots[j] = nullptr;
+                        }
+                        next = nullptr;
+                    }
+                };
+
+                struct ALIGNED(CACHE_LINE_SIZE) clht_hashtable_s
+                {
+                    union
+                    {
+                        struct
+                        {
+                            size_t num_buckets;
+                            clht_table_t table;
+                            size_t hash;
+                            size_t version;
+                            uint8_t next_cache_line[CACHE_LINE_SIZE -
+                                                    (3 * sizeof(size_t)) - (sizeof(clht_table_t))];
+                            clht_hashtable_ptr_t table_tmp;
+                            clht_hashtable_ptr_t table_prev;
+                            clht_hashtable_ptr_t table_new;
+                            volatile uint32_t num_expands;
+                            union
+                            {
+                                volatile uint32_t num_expands_threshold;
+                                uint32_t num_buckets_prev;
+                            };
+                            volatile int32_t is_helper;
+                            volatile int32_t helper_done;
+                            size_t version_min;
+                        };
+                        uint8_t padding[2 * CACHE_LINE_SIZE];
+                    };
+
+                    clht_hashtable_s(uint64_t n_buckets = 0) : num_buckets(n_buckets)
+                    {
+                        table = make_persistent<bucket_s[]>(num_buckets);
+                        hash = num_buckets - 1;
+                        version = 0;
+                        table_tmp = nullptr;
+                        table_new = nullptr;
+                        table_prev = nullptr;
+                        num_expands = 0;
+                        num_expands_threshold = (CLHT_PERC_EXPANSIONS * num_buckets); //é»˜è®¤æ‰©å±•çš„bucketæ•°è¾¾åˆ°æ€»çš„bucketæ•°1%è¿›è¡Œæ‰©å®¹æ“ä½œã€‚
+                        if (num_expands_threshold == 0)
+                        {
+                            num_expands_threshold = 1;
+                        }
+                        is_helper = 1;
+                        helper_done = 0;
+                    }
+                };
+
+                struct ALIGNED(CACHE_LINE_SIZE) ht_ts
+                {
+                    union
+                    {
+                        struct
+                        {
+                            size_t version;
+                            clht_hashtable_ptr_t versionp;
+                            int id;
+                            ht_ts_ptr_t next;
+                        };
+                        uint8_t padding[CACHE_LINE_SIZE];
+                    };
+                };
+
+                struct clht_meta
+                {
+                    clht_hashtable_ptr_t ht;
+                    clht_hashtable_ptr_t ht_oldest;
+                    ht_ts_ptr_t version_list;
+                    size_t version_min;
+                    p<bool> is_resizing;
+                    clht_meta()
+                    {
+                        ht = NULL;
+                        ht_oldest = NULL;
+                        version_list = NULL;
+                        version_min = 0;
+                        is_resizing = false;
+                    }
+                    clht_meta(const clht_hashtable_ptr_t &ht1, const clht_hashtable_ptr_t &ht_oldest1,
+                              const ht_ts_ptr_t &version_list1, size_t version_N, bool flag)
+                    {
+                        ht = ht1;
+                        ht_oldest = ht_oldest1;
+                        version_list = version_list1;
+                        version_min = version_N;
+                        is_resizing = flag;
+                    }
+                }; //ç»“æ„ä½“åé¢å¿˜è®°åŠ åˆ†å·";"å¼•å‘å‡ºäº†è¿™ä¹ˆå¤šé—®é¢˜å‘€;
+
+                static partial_t
+                get_partial(hv_type hv)
+                {
+                    constexpr static size_type shift_bits =
+                        (sizeof(hv_type) - sizeof(partial_t)) * 8;
+                    return (partial_t)((uint64_t)hv >> shift_bits);
+                }
+
+                lfclht(uint64_t n_buckets) : meta(make_persistent<clht_meta>().raw().off),
+                                             thread_num(0)
+                {
+                    std::cout << "LF-CLHT n_buckets = " << n_buckets << std::endl;
+
+                    // setup pool
+                    PMEMoid oid = pmemobj_oid(this);
+                    assert(!OID_IS_NULL(oid));
+                    my_pool_uuid = oid.pool_uuid_lo;
+                    clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid)); //metaåœ¨è®¿é—®å‰å¿…é¡»å…ˆåˆ›å»ºï¼Œå¦åˆ™ä¼šæŠ¥æ®µé”™è¯¯
+                    persistent_ptr<clht_hashtable_s> ht_tmp =
+                        make_persistent<clht_hashtable_s>(n_buckets);
+                    m->ht.off = ht_tmp.raw().off;
+                    //std::cout<<"lfclht constructor debug line 0" << std::endl;
+                    resize_lock = LOCK_FREE;
+                    //        gc_lock = LOCK_FREE;
+                    status_lock = LOCK_FREE;
+                    m->version_list = NULL; //æ„Ÿè§‰æ²¡æœ‰ç”¨èµ·æ¥å‘€
+                                            //std::cout<<"lfclht constructor debug line 1" << std::endl;
+
+                    m->version_min = 0;
+                    m->ht_oldest = m->ht;
+                    //std::cout<<"lfclht constructor debug line 2" << std::endl;
+
+                    m->is_resizing = false;
+                    //std::cout<<"lfclht constructor debug line 3" << std::endl;
+                    //æ²¡æœ‰æŒä¹…åŒ–çš„æ„Ÿè§‰ï¼Œä¸ä¼šæœ‰é—®é¢˜å—ï¼Ÿ
+                    run_expand_thread.get_rw().store(true); //åŸå­å˜é‡å­˜å‚¨storeæŒ‡ä»¤ï¼Œä¿®æ”¹æ—¶é‡‡ç”¨get_rwå‡½æ•°
+                }
+
+                bucket_ptr_t
+                clht_bucket_create_stats(pool_base &pop, clht_hashtable_s *ht_ptr,
+                                         clht_meta_ptr_t &m_copy)
+                {
+                    clht_meta *m = static_cast<clht_meta *>(m_copy(my_pool_uuid)); //added
+                    persistent_ptr<bucket_s> tmp;
+                    make_persistent_atomic<bucket_s>(pop, tmp);
+                    if (__sync_add_and_fetch(&ht_ptr->num_expands, 1) >=
+                        ht_ptr->num_expands_threshold)
+                        m->is_resizing = true; //æ˜¯å¦éœ€è¦æ›´æ”¹ï¼Ÿå¦‚æœè¦æ›´æ”¹ï¼Œæ€ä¹ˆæ”¹ï¼Ÿ
+                    return bucket_ptr_t(tmp.raw().off);
+                }
+
+                /**
 	 * Get the persistent memory pool where hashmap resides.
 	 * @returns pmem::obj::pool_base object.
 	 */
-	pool_base
-	get_pool_base()
-	{
-		PMEMobjpool *pop =
-			pmemobj_pool_by_oid(PMEMoid{my_pool_uuid, 0});
+                pool_base
+                get_pool_base()
+                {
+                    PMEMobjpool *pop =
+                        pmemobj_pool_by_oid(PMEMoid{my_pool_uuid, 0});
 
-		return pool_base(pop);
-	}
+                    return pool_base(pop);
+                }
 
-	void
-	set_thread_num(size_type num)
-	{
-		if(work_threads_num > 0)
-		{
-			// Reclaim the memory in persistent buffers allocated in previous
-			// round of set_thread_num.		
-			for (size_type i = 0; i < work_threads_num; i++)
-			{
-				difference_type di = static_cast<difference_type>(i);
-				if(tmp_meta[di] != nullptr)
-					delete_persistent<clht_meta>(tmp_meta[di]);//´æÔÚ¼´É¾³ı
-				if(tmp_entry[di] != nullptr)
-					delete_persistent<value_type>(tmp_entry[di]);
-			}
-			delete_persistent<persistent_ptr<clht_meta>[]> (tmp_meta, work_threads_num);
-			delete_persistent<persistent_ptr<value_type>[]> (tmp_entry, work_threads_num);
-		}
+                void
+                set_thread_num(size_type num)
+                {
+                    if (work_threads_num > 0)
+                    {
+                        // Reclaim the memory in persistent buffers allocated in previous
+                        // round of set_thread_num.
+                        for (size_type i = 0; i < work_threads_num; i++)
+                        {
+                            difference_type di = static_cast<difference_type>(i);
+                            if (tmp_meta[di] != nullptr)
+                                delete_persistent<clht_meta>(tmp_meta[di]); //å­˜åœ¨å³åˆ é™¤
+                            if (tmp_entry[di] != nullptr)
+                                delete_persistent<value_type>(tmp_entry[di]);
+                        }
+                        delete_persistent<persistent_ptr<clht_meta>[]>(tmp_meta, work_threads_num);
+                        delete_persistent<persistent_ptr<value_type>[]>(tmp_entry, work_threads_num);
+                    }
 
-		work_threads_num = num;
+                    work_threads_num = num;
 
 #ifdef LFCLHT_DEBUG
-		thread_logs.resize(work_threads_num);//vectorÖØĞÂµ÷Õû´óĞ¡
-		for(uint64_t i = 0; i < work_threads_num; i++)
-		{
-			if(!thread_logs[i].is_open())
-			{
-				std::stringstream ss;
-				ss << "thread-" << i << ".log";
-				thread_logs[i].open(ss.str(), std::fstream::out);
-			}
-		}
+                    thread_logs.resize(work_threads_num); //vectoré‡æ–°è°ƒæ•´å¤§å°
+                    for (uint64_t i = 0; i < work_threads_num; i++)
+                    {
+                        if (!thread_logs[i].is_open())
+                        {
+                            std::stringstream ss;
+                            ss << "thread-" << i << ".log";
+                            thread_logs[i].open(ss.str(), std::fstream::out);
+                        }
+                    }
 #endif
-	// Setup persistent buffers according to the thread_num.
-		tmp_meta = make_persistent<persistent_ptr<clht_meta>[]>(work_threads_num);
-		tmp_entry = make_persistent<persistent_ptr<value_type>[]>(work_threads_num);
+                    // Setup persistent buffers according to the thread_num.
+                    tmp_meta = make_persistent<persistent_ptr<clht_meta>[]>(work_threads_num);
+                    tmp_entry = make_persistent<persistent_ptr<value_type>[]>(work_threads_num);
+                }
 
-	
-	}
-		
-/*
+                /*
 	bool
 	get_lock(pool_base &pop, clht_lock_t *lock, clht_hashtable_s *ht_ptr)
 	{
@@ -401,7 +404,7 @@ public:
         }
 
         return true;
-¡£	}
+ã€‚	}
 
 	bool
 	lock_acq_resize(clht_lock_t *lock)
@@ -416,143 +419,143 @@ public:
 		return true;
     } */
 
-    uint8_t
-    try_lock(pool_base &pop, clht_lock_t *lock)
-    {
-	    return tas_uint8(lock);
-    }
+                uint8_t
+                try_lock(pool_base &pop, clht_lock_t *lock)
+                {
+                    return tas_uint8(lock);
+                }
 
-    void
-    unlock(pool_base &pop, clht_lock_t *lock)
-    {
-        pop.drain();
-        *lock = LOCK_FREE;
-    }
+                void
+                unlock(pool_base &pop, clht_lock_t *lock)
+                {
+                    pop.drain();
+                    *lock = LOCK_FREE;
+                }
 
+                ret
+                get(const key_type &key) const
+                {
+                    hv_type hv = hasher{}(key);
+                    clht_meta_ptr_t m_copy(meta);                                  //new added
+                    clht_meta *m = static_cast<clht_meta *>(m_copy(my_pool_uuid)); //new added
+                    clht_hashtable_s *ht_ptr = m->ht.get_address(my_pool_uuid);
+                    difference_type idx = static_cast<difference_type>(
+                        hv % static_cast<hv_type>(ht_ptr->num_buckets));
+                    bucket_s *bucket = &ht_ptr->table[idx];
+                    uint8_t step = 0;
 
-    ret
-    get(const key_type &key) const
-    {
-	    hv_type hv = hasher{}(key);
-		clht_meta_ptr_t m_copy(meta);//new added
-		clht_meta *m = static_cast<clht_meta *>(m_copy(my_pool_uuid));//new added
-        clht_hashtable_s *ht_ptr = m->ht.get_address(my_pool_uuid);
-        difference_type idx = static_cast<difference_type>(
-            hv % static_cast<hv_type>(ht_ptr->num_buckets));
-        bucket_s *bucket = &ht_ptr->table[idx];
-        uint8_t step = 0;
+                    do
+                    {
+                        for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
+                        { //å¦‚æœéœ€è¦åŠ å…¥partial keyè¯¥å¦‚ä½•åšï¼Ÿ
+                            if (bucket->slots[j] != nullptr && key_equal{}(
+                                                                   bucket->slots[j].get_address(my_pool_uuid)->first, key))
+                                return ret(idx, step, j);
+                        }
 
-        do
-        {
-            for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
-            { //Èç¹ûĞèÒª¼ÓÈëpartial key¸ÃÈçºÎ×ö£¿
-                if (bucket->slots[j] != nullptr && key_equal{}(
-                    bucket->slots[j].get_address(my_pool_uuid)->first, key))
-                    return ret(idx, step, j);
-            }
+                        bucket = bucket->next.get_address(my_pool_uuid);
+                        step++; //Number of steps jumped in bucket list --noted by rzxiao
+                    } while (unlikely(bucket != nullptr));
+                    //è¿™é‡Œéœ€è¦åŠ ä¸€å±‚æ§åˆ¶é€»è¾‘ï¼Œç”±äºresizingåŸå› ï¼Œå¯èƒ½ä¸¢å¤±äº†å·²æ’å…¥çš„å…ƒç´ ï¼Œé€ æˆæ‰¾ä¸åˆ°ï¼Œéœ€è¦re-searchæ“ä½œã€‚
+                    return ret();
+                }
 
-            bucket = bucket->next.get_address(my_pool_uuid);
-            step++;//Number of steps jumped in bucket list --noted by rzxiao
-        } while (unlikely(bucket != nullptr));
-		//ÕâÀïĞèÒª¼ÓÒ»²ã¿ØÖÆÂß¼­£¬ÓÉÓÚresizingÔ­Òò£¬¿ÉÄÜ¶ªÊ§ÁËÒÑ²åÈëµÄÔªËØ£¬Ôì³ÉÕÒ²»µ½£¬ĞèÒªre-search²Ù×÷¡£
-        return ret();
-    }
+                bool
+                key_exists(bucket_s *bucket, const key_type &key) const
+                {
+                    do
+                    {
+                        for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
+                        {
+                            if (bucket->slots[j] != nullptr && key_equal{}(
+                                                                   bucket->slots[j].get_address(my_pool_uuid)->first, key))
+                                return true;
+                        }
 
-    bool
-    key_exists(bucket_s *bucket, const key_type &key) const
-    {
-        do
-        {
-            for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
-            {
-                if (bucket->slots[j] != nullptr && key_equal{}(
-                    bucket->slots[j].get_address(my_pool_uuid)->first, key))
-                    return true;
-            }
+                        bucket = bucket->next.get_address(my_pool_uuid);
+                    } while (unlikely(bucket != nullptr));
+                    return false;
+                }
 
-            bucket = bucket->next.get_address(my_pool_uuid);
-        } while (unlikely(bucket != nullptr));
-        return false;
-    }
+                static void
+                allocate_KV_copy_construct(pool_base &pop,
+                                           persistent_ptr<value_type> &KV_ptr,
+                                           const void *param)
+                {
+                    const value_type *v = static_cast<const value_type *>(param);
+                    internal::make_persistent_object<value_type>(pop, KV_ptr, *v);
+                }
 
-    static void
-	allocate_KV_copy_construct(pool_base &pop,
-		persistent_ptr<value_type> &KV_ptr,
-		const void *param)
-	{
-		const value_type *v = static_cast<const value_type *>(param);
-		internal::make_persistent_object<value_type>(pop, KV_ptr, *v);
-	}
+                static void
+                allocate_KV_move_construct(pool_base &pop,
+                                           persistent_ptr<value_type> &KV_ptr,
+                                           const void *param)
+                { //è½¬ç§»æ‹·è´
+                    const value_type *v = static_cast<const value_type *>(param);
+                    internal::make_persistent_object<value_type>(
+                        pop, KV_ptr, std::move(*const_cast<value_type *>(v)));
+                }
 
-	static void
-	allocate_KV_move_construct(pool_base &pop,
-		persistent_ptr<value_type> &KV_ptr,
-		const void *param)
-	{//×ªÒÆ¿½±´
-		const value_type *v = static_cast<const value_type *>(param);
-		internal::make_persistent_object<value_type>(
-			pop, KV_ptr, std::move(*const_cast<value_type *>(v)));
-	}
+                ret
+                put(const value_type &value, size_type thread_id, size_type id)
+                {
+                    return generic_insert(value.first, &value,
+                                          allocate_KV_copy_construct, thread_id, id);
+                }
 
-	ret
-	put(const value_type &value,size_type thread_id, size_type id)
-	{
-		return generic_insert(value.first, &value,
-			allocate_KV_copy_construct, thread_id, id);
-	}
+                ret
+                put(value_type &&value, size_type thread_id, size_type id)
+                { //valueä¸º&&ï¼Œå¯¹åº”ç§»åŠ¨æ‹·è´
+                    return generic_insert(value.first, &value,
+                                          allocate_KV_move_construct, thread_id, id);
+                }
 
-	ret
-	put(value_type &&value,size_type thread_id, size_type id)
-	{//valueÎª&&£¬¶ÔÓ¦ÒÆ¶¯¿½±´
-		return generic_insert(value.first, &value,
-			allocate_KV_move_construct, thread_id, id);
-	}
+                // bool
+                ret
+                generic_insert(const key_type &key, const void *param,
+                               void (*allocate_KV)(pool_base &, persistent_ptr<value_type> &,
+                                                   const void *),
+                               size_type thread_id, size_type id)
+                {
+                    pool_base pop = get_pool_base();
+                    //std::cout << "generic insert tag 0 "<<std::endl;
+                    difference_type t_id = static_cast<difference_type>(thread_id);
+                    //std::cout << "generic insert tag 0.1 "<<std::endl;
 
-	// bool
-	ret
-	generic_insert(const key_type &key, const void *param,
-		void (*allocate_KV)(pool_base &, persistent_ptr<value_type> &,
-		const void *),size_type thread_id, size_type id)
-    {
-	    pool_base pop = get_pool_base();
-//std::cout << "generic insert tag 0 "<<std::endl;
-		difference_type t_id = static_cast<difference_type>(thread_id);
-//std::cout << "generic insert tag 0.1 "<<std::endl;
+                    allocate_KV(pop, tmp_entry[t_id], param);
+                    //std::cout << "generic insert tag 0.2 "<<std::endl;
 
-        allocate_KV(pop, tmp_entry[t_id], param);
-//std::cout << "generic insert tag 0.2 "<<std::endl;
+                    kv_ptr_t created(tmp_entry[t_id].raw().off);
+                    //std::cout << "generic insert tag 1 "<<std::endl;
 
-		kv_ptr_t created(tmp_entry[t_id].raw().off);
-//std::cout << "generic insert tag 1 "<<std::endl;
-
-/*
+                    /*
 	    clht_hashtable_s *ht_ptr = ht.get_address(my_pool_uuid);
 	    hv_type hv = hasher{}(key);
 	    difference_type idx = static_cast<difference_type>(
             hv % static_cast<hv_type>(ht_ptr->num_buckets));
 	    bucket_s *bucket = &ht_ptr->table[idx];
 */
-	    bool expanded = false;
-	    uint64_t initial_capacity = 0;
+                    bool expanded = false;
+                    uint64_t initial_capacity = 0;
 
 #ifdef LFCLHT_DEBUG
-		uint64_t retry_insert_cnt = 0;
-//std::cout << "generic insert tag 1.1 "<<std::endl;
+                    uint64_t retry_insert_cnt = 0;
+                    //std::cout << "generic insert tag 1.1 "<<std::endl;
 
-//		thread_logs[thread_id] << "Thread-" << thread_id << " starts inserting " /*<< key */<< std::endl;
-//std::cout << "generic insert tag 1.2 "<<std::endl;
+                    //		thread_logs[thread_id] << "Thread-" << thread_id << " starts inserting " /*<< key */<< std::endl;
+                    //std::cout << "generic insert tag 1.2 "<<std::endl;
 
 #endif
 
 #ifdef DEBUG_RESIZING
-        initial_capacity = capacity();
+                    initial_capacity = capacity();
 #endif
-/*
+                    /*
 #if CLHT_READ_ONLY_FAIL == 1
 	    if (key_exists(bucket, key))
 		    return ret(true);
 #endif */
-/*
+                    /*
         clht_lock_t *lock = &bucket->lock;
         while (!get_lock(pop, lock, ht_ptr))
         {
@@ -563,118 +566,125 @@ public:
             lock = &bucket->lock;
         }
  */
-	//while(true) { //added 20200905
-RETRY_INSERT:
+                    //while(true) { //added 20200905
+                RETRY_INSERT:
 #ifdef LFCLHT_DEBUG
-		retry_insert_cnt ++;
-		if(retry_insert_cnt > 10) {
-			thread_logs[thread_id] << "Thread-" << thread_id
-				<< " [loop] retry_insert_cnt = " << retry_insert_cnt
-			/*	<< ", key = " << key */<< std::endl;
-		}
-		else if (retry_insert_cnt > 1)
-		{
-			thread_logs[thread_id] << "Thread-" << thread_id
-				<< " retry_insert_cnt = " << retry_insert_cnt
-			/*	<< ", key = " << key */<< std::endl;
-		} 
-#endif
-//std::cout << "generic insert tag 2 "<<std::endl;
-
-		clht_meta_ptr_t m_copy(meta);
-		pop.persist(&(meta.off), sizeof(uint64_t));//·ÀÖ¹ÔªÊı¾İmeta±»¸ü¸ÄÁË£¬ĞèÒªÏÈ³Ö¾Ã»¯
-
-		clht_meta *m = static_cast<clht_meta *>(m_copy(my_pool_uuid));
-		
-        clht_hashtable_s *ht_ptr = m->ht.get_address(my_pool_uuid);
-		hv_type hv = hasher{}(key);
-        difference_type idx = static_cast<difference_type>(
-              hv % static_cast<hv_type>(ht_ptr->num_buckets));
-        bucket_s *bucket = &ht_ptr->table[idx];
-
-		if(key_exists(bucket, key))
-			return ret(true);
-//std::cout << "generic insert tag 3 "<<std::endl;
-
-        kv_ptr_t *empty = nullptr;
-        do
-        {
-            for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
-            {
-                if (bucket->slots[j] != nullptr && key_equal{}(
-                    bucket->slots[j].get_address(my_pool_uuid)->first, key))
-                {
-//			        unlock(pop, lock);
-                    return ret(true);
-		        }
-                else if (empty == nullptr && bucket->slots[j] == nullptr)
-                    empty = &bucket->slots[j];
-            }
-//std::cout << "generic insert tag 4 "<<std::endl;
-
-//            int resize = 0;
-            if (likely(bucket->next == nullptr))
-            {
-                if (unlikely(empty == nullptr))
-                {
-                    bucket_ptr_t b_new = clht_bucket_create_stats(pop,
-                        ht_ptr, m_copy); //´«µİm_copy ÊÇ·ñÕıÈ·»¹ÊÇÒª´«meta¡£
-                    kv_ptr_t &s_new = b_new(my_pool_uuid)->slots[0];
-
-                    s_new.off = created.raw();
-                    pop.persist(&s_new.off, sizeof(kv_ptr_t));
-					if(CAS(&(bucket->next.off), /*nullptr*/0, b_new.raw())) {//½«nullptr¸Ä³ÉÊıÖµ0
-                    	pop.persist(&bucket->next.off, sizeof(bucket_ptr_t));						
-					}
-                    else {
-		#ifdef LFCLHT_DEBUG
-						std::cout << "function-generic_insert line556 insertion, cas fails, bucket->next "<< std::endl;
-		#endif
-						goto RETRY_INSERT;
+                    retry_insert_cnt++;
+                    if (retry_insert_cnt > 10)
+                    {
+                        thread_logs[thread_id] << "Thread-" << thread_id
+                                               << " [loop] retry_insert_cnt = " << retry_insert_cnt
+                                               /*	<< ", key = " << key */
+                                               << std::endl;
                     }
-                }
-                else
-                {
-//                    empty->off = tmp_entry.raw().off;
-					kv_ptr_t old_empty = *empty;
-					if(CAS(&(empty->off), old_empty.raw(), created.raw())) {
-                    	pop.persist(&empty->off, sizeof(kv_ptr_t));						
-					} else {
+                    else if (retry_insert_cnt > 1)
+                    {
+                        thread_logs[thread_id] << "Thread-" << thread_id
+                                               << " retry_insert_cnt = " << retry_insert_cnt
+                                               /*	<< ", key = " << key */
+                                               << std::endl;
+                    }
+#endif
+                    //std::cout << "generic insert tag 2 "<<std::endl;
+
+                    clht_meta_ptr_t m_copy(meta);
+                    pop.persist(&(meta.off), sizeof(uint64_t)); //é˜²æ­¢å…ƒæ•°æ®metaè¢«æ›´æ”¹äº†ï¼Œéœ€è¦å…ˆæŒä¹…åŒ–
+
+                    clht_meta *m = static_cast<clht_meta *>(m_copy(my_pool_uuid));
+
+                    clht_hashtable_s *ht_ptr = m->ht.get_address(my_pool_uuid);
+                    hv_type hv = hasher{}(key);
+                    difference_type idx = static_cast<difference_type>(
+                        hv % static_cast<hv_type>(ht_ptr->num_buckets));
+                    bucket_s *bucket = &ht_ptr->table[idx];
+
+                    if (key_exists(bucket, key))
+                        return ret(true);
+                    //std::cout << "generic insert tag 3 "<<std::endl;
+
+                    kv_ptr_t *empty = nullptr;
+                    do
+                    {
+                        for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
+                        {
+                            if (bucket->slots[j] != nullptr && key_equal{}(
+                                                                   bucket->slots[j].get_address(my_pool_uuid)->first, key))
+                            {
+                                //			        unlock(pop, lock);
+                                return ret(true);
+                            }
+                            else if (empty == nullptr && bucket->slots[j] == nullptr)
+                                empty = &bucket->slots[j];
+                        }
+                        //std::cout << "generic insert tag 4 "<<std::endl;
+
+                        //            int resize = 0;
+                        if (likely(bucket->next == nullptr))
+                        {
+                            if (unlikely(empty == nullptr))
+                            {
+                                bucket_ptr_t b_new = clht_bucket_create_stats(pop,
+                                                                              ht_ptr, m_copy); //ä¼ é€’m_copy æ˜¯å¦æ­£ç¡®è¿˜æ˜¯è¦ä¼ metaã€‚
+                                kv_ptr_t &s_new = b_new(my_pool_uuid)->slots[0];
+
+                                s_new.off = created.raw();
+                                pop.persist(&s_new.off, sizeof(kv_ptr_t));
+                                if (CAS(&(bucket->next.off), /*nullptr*/ 0, b_new.raw()))
+                                { //å°†nullptræ”¹æˆæ•°å€¼0
+                                    pop.persist(&bucket->next.off, sizeof(bucket_ptr_t));
+                                }
+                                else
+                                {
 #ifdef LFCLHT_DEBUG
-						std::cout << "insertion, cas fails, empty->off "<< empty->off << std::endl;
+                                    std::cout << "function-generic_insert line556 insertion, cas fails, bucket->next " << std::endl;
+#endif
+                                    goto RETRY_INSERT;
+                                }
+                            }
+                            else
+                            {
+                                //                    empty->off = tmp_entry.raw().off;
+                                kv_ptr_t old_empty = *empty;
+                                if (CAS(&(empty->off), old_empty.raw(), created.raw()))
+                                {
+                                    pop.persist(&empty->off, sizeof(kv_ptr_t));
+                                }
+                                else
+                                {
+#ifdef LFCLHT_DEBUG
+                                    std::cout << "insertion, cas fails, empty->off " << empty->off << std::endl;
 #endif
 
-						goto RETRY_INSERT;
-					}
+                                    goto RETRY_INSERT;
+                                }
+                            }
 
-                }
-
- //               unlock(pop, lock);
-                if (unlikely(!m->is_resizing && meta(my_pool_uuid)->is_resizing))
-                {
+                            //               unlock(pop, lock);
+                            if (unlikely(!m->is_resizing && meta(my_pool_uuid)->is_resizing))
+                            {
 #ifdef DEBUG_RESIZING
-                    expanded = true;
+                                expanded = true;
 #endif
-					pop.persist(&(meta.off), sizeof(uint64_t));
-                    // Start resizing... If crash, return true, because
-                    // the insert anyway succeeded
-                    if (ht_status(true/* is_increase */,
-                        false/* just_print */) == 0)//·µ»Ø0±íÊ¾¹ÊÕÏÁË
-                        return ret(expanded, initial_capacity);
+                                pop.persist(&(meta.off), sizeof(uint64_t));
+                                // Start resizing... If crash, return true, because
+                                // the insert anyway succeeded
+                                if (ht_status(true /* is_increase */,
+                                              false /* just_print */) == 0) //è¿”å›0è¡¨ç¤ºæ•…éšœäº†
+                                    return ret(expanded, initial_capacity);
+                            }
+                            return ret(expanded, initial_capacity);
+                        }
+                        bucket = bucket->next.get_address(my_pool_uuid);
+                    } while (true);
+                    //	  }//added 20200905
                 }
-                return ret(expanded, initial_capacity);
-            }
-            bucket = bucket->next.get_address(my_pool_uuid);
-        } while (true);
-//	  }//added 20200905
-    }
 
-    ret
-    erase(const key_type &key, size_type thread_id)
-    {
-	    pool_base pop = get_pool_base();
-	    hv_type hv = hasher{}(key);
-/*	    clht_hashtable_s *ht_ptr = ht.get_address(my_pool_uuid);
+                ret
+                erase(const key_type &key, size_type thread_id)
+                {
+                    pool_base pop = get_pool_base();
+                    hv_type hv = hasher{}(key);
+                    /*	    clht_hashtable_s *ht_ptr = ht.get_address(my_pool_uuid);
 	    difference_type idx = static_cast<difference_type>(
 		    hv % static_cast<hv_type>(ht_ptr->num_buckets));
 	    bucket_s *bucket = &ht_ptr->table[idx];
@@ -685,7 +695,7 @@ RETRY_INSERT:
             return ret();
 #endif
 */
-/*        clht_lock_t *lock = &bucket->lock;
+                    /*        clht_lock_t *lock = &bucket->lock;
         while (!get_lock(pop, lock, ht_ptr))
         {
             ht_ptr = ht.get_address(my_pool_uuid);
@@ -695,496 +705,505 @@ RETRY_INSERT:
             lock = &bucket->lock;
         }
 */
-		while(true) {
-			clht_meta_ptr_t m_copy(meta);
-			clht_meta *m = static_cast<clht_meta *>(m_copy(my_pool_uuid));
-			clht_hashtable_s *ht_ptr = m->ht.get_address(my_pool_uuid);
-	    	difference_type idx = static_cast<difference_type>(
-		    	hv % static_cast<hv_type>(ht_ptr->num_buckets));
-	    	bucket_s *bucket = &ht_ptr->table[idx];
-	    	uint8_t step = 0;
-	        do
-	        {
-	            for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
-	            {
-	            	kv_ptr_t tmp(bucket->slots[j].off);//ÊÇ·ñĞèÒªÌí¼Óoff
-	            	if(tmp.get_offset() != 0) {
-//		                if (bucket->slots[j] != nullptr && key_equal{}(
-//		                    bucket->slots[j].get_address(my_pool_uuid)->first, key))
-						if(key_equal{}(tmp.get_address(my_pool_uuid)->first, key))
-		                {
-		                	if(CAS(&(bucket->slots[j].off), tmp.off, 0)) {
-								pop.persist(&(bucket->slots[j].off), sizeof(kv_ptr_t));
-								//PMEMoid oid = bucket->slots[j].raw_ptr(my_pool_uuid);
-								PMEMoid oid = tmp.raw_ptr(my_pool_uuid);
-			                    pmemobj_free(&oid);
-
-//			                    bucket->slots[j] = nullptr;
-			                    //pop.persist(&bucket->slots[j].off, sizeof(kv_ptr_t));
-
-//			                    unlock(pop, lock);
-								if(m_copy == meta)
-			                    	return ret(idx, step, j);
-								else
-									continue;
-		                	}
-							else {
-								continue;
-							}
-		                }
-	            	}
-	            }
-
-	            bucket = bucket->next.get_address(my_pool_uuid);
-	            step++;
-	        } while (unlikely(bucket != nullptr));
-			return ret();
-		}//end while(true)
-//        unlock(pop, lock);
-
-    }
-
-    size_type
-    size()
-    {
-    	clht_meta *m = static_cast<clht_meta  *>(meta(my_pool_uuid));
-	    clht_hashtable_s *ht_ptr = m->ht.get_address(my_pool_uuid);//¿¼ÂÇÊÇ·ñĞèÒªÔö¼Ómeta
-        uint64_t n_buckets = ht_ptr->num_buckets;
-	    bucket_s *bucket = nullptr;
-        size_type size = 0;
-
-        for (difference_type idx = 0; idx < n_buckets; idx++)
-        {
-            bucket = ht_ptr->table[idx].get_address(my_pool_uuid);//»ñµÃµØÖ·µÄÎªÖ¸Õë
-            do
-            {
-                for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
-                {
-                    if (bucket->slots[j] != nullptr)
-                        size++;
-                }
-
-                bucket = bucket->next.get_address(my_pool_uuid);
-            } while (unlikely(bucket != nullptr));
-        }
-
-        return size;
-    }
-#if 0
-    size_type
-    ht_status(bool is_increase, bool just_print
-    )
-    {
-	    pool_base pop = get_pool_base();
-	    if (try_lock(pop, &status_lock) && !is_increase)
-            return 0;
-
-		clht_meta *m = static_cast<clht_meta  *>(meta(my_pool_uuid));//ÊÇ·ñÒª¿½±´²Ù×÷
-	    clht_hashtable_s *ht_ptr = m->ht.get_address(my_pool_uuid);
-        difference_type n_buckets = (difference_type)ht_ptr->num_buckets;
-        bucket_s *bucket = nullptr;
-        size_type size = 0;
-        int expands = 0;
-        int expands_max = 0;
-
-        for (difference_type idx = 0; idx < n_buckets; idx++)
-        {
-            bucket = &ht_ptr->table[idx];
-
-            int expands_cont = -1;
-            expands--;
-            do
-            {
-                expands_cont++;
-                expands++;
-                for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
-                {
-                    if (bucket->slots[j] != nullptr)
-                        size++;
-                }
-
-                bucket = bucket->next.get_address(my_pool_uuid);
-            } while (unlikely(bucket != nullptr));
-
-            if (expands_cont > expands_max)
-                expands_max = expands_cont;
-        }
-
-        double full_ratio = 100.0 * size / (n_buckets * ENTRIES_PER_BUCKET);
-
-        if (just_print)
-        {
-            printf("[STATUS-%02d] #bu: %7zu / #elems: %7zu / full%%: %8.4f%% / expands: %4d / max expands: %2d\n",
-                    99, n_buckets, size, full_ratio, expands, expands_max);
-        }
-        else
-        {
-            if (full_ratio > 0 && full_ratio < CLHT_PERC_FULL_HALVE)//loadfactor<5%
-            {
-                ht_resize_pes(false/* is_increase */, (size_t)33);//µ÷ÓÃht_resize_pesº¯Êı
-            }
-            else if ((full_ratio > 0 && full_ratio > CLHT_PERC_FULL_DOUBLE)
-                || expands_max > CLHT_MAX_EXPANSIONS || is_increase)
-            {
-                uint64_t inc_by = (uint64_t)(full_ratio / CLHT_OCCUP_AFTER_RES);//inc_byÔö³¤±ÈÀı£¬ºóÃæĞèÒª±ä³É2µÄn´Î·½¡£
-                int inc_by_pow2 = pow2roundup(inc_by);
-
-                if (inc_by_pow2 == 1)
-                {
-                    inc_by_pow2 = 2;
-                }
-                int ret = ht_resize_pes(true/* is_increase */,
-                    (size_t)inc_by_pow2);//pes´ú±íÉ¶ÒâË¼£¿
-                // return if crashed
-                if (ret == -1)
-                    return 0;
-            }
-        }
-
-        unlock(pop, &status_lock);
-        return size;
-    }
-#endif
-//¶àÏß³ÌĞ­Í¬À©Èİ
-int ht_multithread_resize(bool is_increase,size_t by=2){
-	pool_base pop = get_pool_base();
-	clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid));
-	m->ht_oldest = m->ht.get_address(my_pool_uuid);
-	size_t fixed_bucket_num = m->ht_oldest->num_buckets % resize_threads_num==0 ?m->ht_oldest->num_buckets/resize_threads_num: m->ht_oldest->num_buckets/resize_threads_num + 1;
-
-	size_t num_buckets_new;
-	if(is_increase){
-		num_buckets_new = pow2roundup(by * m->ht_oldest->num_buckets);
-	}
-		persistent_ptr<clht_hashtable_s> ht_tmp;
-		transaction::run(pop, [&] {
-			// A transaction is required as the constructor of clht_hashtable_s
-			// invokes "make_persistent".
-			ht_tmp = make_persistent<clht_hashtable_s>(num_buckets_new);//ÒÔÊÂÎñµÄ·½Ê½½øĞĞÁÙÊ±µÄÀ©ÈİµÄÉ¢ÁĞ±í¹¹½¨£¡±£Ö¤Ò»ÖÂĞÔ¡£
-		});
-
-		clht_hashtable_s *ht_new = ht_tmp.get();
-		ht_new->version = m->ht_oldest->version + 1;
-
-		//¶àÏß³Ì²¢·¢rehashing
-		for(size_type i=0; i < resize_threads_num; i++) {
-			
-		}
-		if(m->is_resizing){//Èç¹ûµ±Ç°É¢ÁĞ±íÕıÔÚÀ©Èİ£¬ÄÇ¾Í¶àÏß³ÌÀ©Èİ
-			if(resize_bucket_num>0){//±íÊ¾µ±Ç°À©Èİ²Ù×÷»¹Î´Íê³É£¬Ö»ÓĞresize_bucket_numÎª0Ê±²Å±íÊ¾À©ÈİÍê±Ï
-				if(resize_bucket_num-fixed_bucket_num <= 0) {
-					for(difference_type idx = 0;
-						idx < (difference_type) resize_bucket_num; idx++){
-						bucket_s *bu_cur = &ht_old->table[idx];
-						bucket_cpy(bu_cur,ht_new);
-					}
-					ht_new->table_prev = m->ht;
-					pop.drain();
-
-
-					//switch to the new hash table
-					m->ht.off = ht_tmp.raw().off;
-					pop.persist(&m->ht.off,sizeof(clht_hashtable_ptr_t));
-					m->ht_oldest->table_new.off = ht_tmp.raw().off;
-					pop.persist(&m->ht_oldest->table_new.off, sizeof(clht_hashtable_ptr_t));
-					std::lock_guard<std::mutex> guard(resize_bucket_num_mutex);
-					resize_bucket_num = 0;
-					m->is_resizing = false;
-					pop.persist(&m->is_resizing, sizeof(bool));
-					return 1;//±íÊ¾¶àÏß³ÌÀ©ÈİÍê±Ï
-				}else {
-					std::lock_guard<std::mutex> guard(resize_bucket_num_mutex);
-					resize_bucket_num = resize_bucket_num - fixed_bucket_num;
-					for(difference_type idx = resize_bucket_num; idx < resize_bucket_num+fixed_bucket_num; idx++) {
-						idx < (difference_type) resize_bucket_num; idx++){
-						bucket_s *bu_cur = &ht_old->table[idx];
-						bucket_cpy(bu_cur,ht_new);
-					}
-
-				}
-			}
-		}
-     }
-}
-
-    /// Round up to next higher power of 2 (return x if it's already a power
-    /// of 2) for 32-bit numbers¡¤
-    static inline uint64_t
-    pow2roundup (uint64_t x)
-    {
-        if (x==0) return 1;
-        --x;
-        x |= x >> 1;
-        x |= x >> 2;
-        x |= x >> 4;
-        x |= x >> 8;
-        x |= x >> 16;
-        x |= x >> 32;
-        return x+1;
-    }
-#if 0
-    /**
-     * Perform actual resizing. using multi-threaded collaborative concurrent resizing within a resize_lock.//lock-based multi-threaded concurrent resizing
-     * ÎªÁË·ÀÖ¹¹ı¶ÈÓÅ»¯£¬¹Ø¼üÊÇÈçºÎ½øĞĞ»ùÓÚµ¥lockµÄ¶àÏß³Ì²¢·¢À©Èİ£¨ÊÇ·ñ¿ÉÒÔÊµÏÖ---¼¼Êõ¿ÉĞĞĞÔ·½Ãæ£©
-    */
-    int
-    ht_resize_pes(bool is_increase, size_t by)
-    {
-	    pool_base pop = get_pool_base();
-		clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid));//¾²Ì¬ÀàĞÍ×ª»»²¢·ÇÊÇÕæÕıµÄ¿½±´²Ù×÷¡£
-	    clht_hashtable_s *ht_old = m->ht.get_address(my_pool_uuid);
-        if (try_lock(pop, &resize_lock))
-            return 0;
-
-        size_t num_buckets_new;
-        if (is_increase)
-        {
-            /* num_buckets_new = CLHT_RATIO_DOUBLE * ht_old->num_buckets; */
-            num_buckets_new = by * ht_old->num_buckets;
-        }
-        else
-        {
-#if CLHT_HELP_RESIZE == 1
-            ht_old->is_helper = 0;
-#endif
-            num_buckets_new = ht_old->num_buckets / CLHT_RATIO_HALVE;//Õâ¸öÊÇÑ¹Ëõ±í¿Õ¼äÂï£¿´óĞ¡±äÎª1/8£¡
-        }
-
-        persistent_ptr<clht_hashtable_s> ht_tmp;
-        transaction::run(pop, [&] {
-            // A transaction is required as the constructor of clht_hashtable_s
-            // invokes "make_persistent".
-            ht_tmp = make_persistent<clht_hashtable_s>(num_buckets_new);//ÒÔÊÂÎñµÄ·½Ê½½øĞĞÁÙÊ±µÄÀ©ÈİµÄÉ¢ÁĞ±í¹¹½¨£¡±£Ö¤Ò»ÖÂĞÔ¡£
-        });
-
-        clht_hashtable_s *ht_new = ht_tmp.get();
-        ht_new->version = ht_old->version + 1;//ÒÔ°æ±¾»¯·½Ê½±£Ö¤É¢ÁĞ±í¸üĞÂµÄÒ»ÖÂĞÔ¡£ÕâÀïµÄht_newºÍht_oldÊÇ·ñĞèÒªÍ¬meta½øĞĞÁªÏµ¡£
-/*
-* ÒÔÏÂÕâ²¿·ÖÊÇ¶àÏß³Ì²¢ĞĞÀ©ÈİµÄ¹Ø¼ü²¿¼ş£¡
-*/
-#if CLHT_HELP_RESIZE == 1
-        ht_old->table_tmp.off = ht_tmp.raw().off;
-        pop.persist(&ht_old->table_tmp.off, sizeof(clht_hashtable_ptr_t));
-
-        for (difference_type idx = 0;
-            idx < (difference_type)ht_old->num_buckets; idx++)
-        {
-            bucket_s *bu_cur = &ht_old->table[idx];
-            int ret = bucket_cpy(bu_cur, ht_new);
-            /* reached a point where the helper is handling */
-            if (ret == -1)
-                return -1;
-
-            if (!ret)
-                break;
-        }
-
-        if (is_increase && ht_old->is_helper != 1)	/* there exist a helper */
-        {
-            while (ht_old->helper_done != 1)
-                atomic_backoff(); //×èÈûÒÔµÈ´ıÍê³É£¡
-        }
-#else
-        for (difference_type idx = 0;
-            idx < (difference_type)ht_old->num_buckets; idx++)
-        {
-            bucket_s *bu_cur = &ht_old->table[idx];
-            int ret = bucket_cpy(bu_cur, ht_new);
-            if (ret == -1)//´Ë´¦µÄ·µ»ØÖµ-1±íÊ¾Ê²Ã´ÒâË¼£¿
-                return -1;
-        }
-#endif
-
-        ht_new->table_prev = m->ht;
-        int ht_resize_again = 0;
-        if (ht_new->num_expands >= ht_new->num_expands_threshold)
-        {
-            ht_resize_again = 1;
-        }
-
-        pop.drain();
-
-        // Switch to the new hash table
-        m->ht.off = ht_tmp.raw().off;
-        pop.persist(&m->ht.off, sizeof(clht_hashtable_ptr_t));
-        ht_old->table_new.off = ht_tmp.raw().off;
-        pop.persist(&ht_old->table_new.off, sizeof(clht_hashtable_ptr_t));
-
-        unlock(pop, &resize_lock);
-
-        if (ht_resize_again)
-		    ht_status(true /* is_increase */, false /* just_print */);
-
-	    return 1;
-    }
-#endif
-
-    int
-    bucket_cpy(bucket_s *bucket, clht_hashtable_s *ht_new)
-    {
- /*       if (!lock_acq_resize(&bucket->lock))//ĞèÒª×öÊÊÅäĞŞ¸Ä»òÖ±½ÓÉ¾³ı
-            return 0;
-       */
-
-        do
-        {
-            for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
-            {
-                if (bucket->slots[j] != nullptr)
-                {
-                    hv_type hv = hasher{}(
-                        bucket->slots[j].get_address(my_pool_uuid)->first);
-                    difference_type idx = static_cast<difference_type>(
-                        hv % static_cast<hv_type>(ht_new->num_buckets));
-                    put_seq(ht_new, bucket->slots[j], idx);
-                }
-            }
-            bucket = bucket->next.get_address(my_pool_uuid);
-        } while (unlikely(bucket != nullptr));
-
-        return 1;
-    }
-
-    bool
-    put_seq(clht_hashtable_s *hashtable, kv_ptr_t slot, difference_type idx)
-    {
-        pool_base pop = get_pool_base();
-//		clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid));
-        bucket_s *bucket = &hashtable->table[idx];
-
-        do
-        {
-            for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
-            {
-                if (bucket->slots[j] == nullptr)
-                {
-                    bucket->slots[j] = slot;
-                    pop.persist(&bucket->slots[j].off, sizeof(kv_ptr_t));
-                    return true;
-                }
-            }
-
-            if (bucket->next == NULL)
-            {
-    //            int null;
-                bucket_ptr_t b_new = clht_bucket_create_stats(
-                    pop, hashtable, meta);//the third parameter can't be null£¬must be nullptr or 0
-                kv_ptr_t &s_new = b_new(my_pool_uuid)->slots[0];
-                s_new.off = slot.off;
-                pop.persist(&s_new.off, sizeof(kv_ptr_t));
-                return true;
-            }
-
-            bucket = bucket->next.get_address(my_pool_uuid);
-        }
-        while (true);
-    }
-
-    void
-    ht_resize_help(clht_hashtable_s *hashtable)
-    {
-	    if ((int32_t)__sync_fetch_and_sub(
-            (volatile uint32_t*) &hashtable->is_helper, 1) <= 0)
-            return;
-
-        for (difference_type idx = (difference_type)hashtable->hash;
-            idx >= 0; idx--)
-        {
-            bucket_s *bucket = &hashtable->table[idx];
-            if (!bucket_cpy(
-                bucket, hashtable->table_tmp.get_address(my_pool_uuid)))
-                break;
-        }
-
-        hashtable->helper_done = 1;
-    }
-
-    void
-    print()
-    {
-    	clht_meta *m = static_cast<clht_meta  *>(meta(my_pool_uuid));
-        clht_hashtable_s *hashtable = m->ht.get_address(my_pool_uuid);//ĞèÒª×öÊÊÅäĞŞ¸Ä£¬ÁªÏµÉÏmeta
-        difference_type n_buckets = (difference_type)hashtable->num_buckets;
-        std::cout << "Number of buckets: " << n_buckets << std::endl;
-
-        for (difference_type idx = 0; idx < n_buckets; idx++)
-        {
-            bucket_s *bucket = &hashtable->table[idx];
-            std::cout << "[[" << idx << "]]";
-
-            do
-            {
-                for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
-                {
-                    if (bucket->slots[j] != nullptr)
+                    while (true)
                     {
-                        value_type* e =
-                            bucket->slots[j].get_address(my_pool_uuid);
-                        std::cout << "(" << e->first
-                            << "/" << e.second << ")-> ";
+                        clht_meta_ptr_t m_copy(meta);
+                        clht_meta *m = static_cast<clht_meta *>(m_copy(my_pool_uuid));
+                        clht_hashtable_s *ht_ptr = m->ht.get_address(my_pool_uuid);
+                        difference_type idx = static_cast<difference_type>(
+                            hv % static_cast<hv_type>(ht_ptr->num_buckets));
+                        bucket_s *bucket = &ht_ptr->table[idx];
+                        uint8_t step = 0;
+                        do
+                        {
+                            for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
+                            {
+                                kv_ptr_t tmp(bucket->slots[j].off); //æ˜¯å¦éœ€è¦æ·»åŠ off
+                                if (tmp.get_offset() != 0)
+                                {
+                                    //		                if (bucket->slots[j] != nullptr && key_equal{}(
+                                    //		                    bucket->slots[j].get_address(my_pool_uuid)->first, key))
+                                    if (key_equal{}(tmp.get_address(my_pool_uuid)->first, key))
+                                    {
+                                        if (CAS(&(bucket->slots[j].off), tmp.off, 0))
+                                        {
+                                            pop.persist(&(bucket->slots[j].off), sizeof(kv_ptr_t));
+                                            //PMEMoid oid = bucket->slots[j].raw_ptr(my_pool_uuid);
+                                            PMEMoid oid = tmp.raw_ptr(my_pool_uuid);
+                                            pmemobj_free(&oid);
+
+                                            //			                    bucket->slots[j] = nullptr;
+                                            //pop.persist(&bucket->slots[j].off, sizeof(kv_ptr_t));
+
+                                            //			                    unlock(pop, lock);
+                                            if (m_copy == meta)
+                                                return ret(idx, step, j);
+                                            else
+                                                continue;
+                                        }
+                                        else
+                                        {
+                                            continue;
+                                        }
+                                    }
+                                }
+                            }
+
+                            bucket = bucket->next.get_address(my_pool_uuid);
+                            step++;
+                        } while (unlikely(bucket != nullptr));
+                        return ret();
+                    } //end while(true)
+                      //        unlock(pop, lock);
+                }
+
+                size_type
+                size()
+                {
+                    clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid));
+                    clht_hashtable_s *ht_ptr = m->ht.get_address(my_pool_uuid); //è€ƒè™‘æ˜¯å¦éœ€è¦å¢åŠ meta
+                    uint64_t n_buckets = ht_ptr->num_buckets;
+                    bucket_s *bucket = nullptr;
+                    size_type size = 0;
+
+                    for (difference_type idx = 0; idx < n_buckets; idx++)
+                    {
+                        bucket = ht_ptr->table[idx].get_address(my_pool_uuid); //è·å¾—åœ°å€çš„ä¸ºæŒ‡é’ˆ
+                        do
+                        {
+                            for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
+                            {
+                                if (bucket->slots[j] != nullptr)
+                                    size++;
+                            }
+
+                            bucket = bucket->next.get_address(my_pool_uuid);
+                        } while (unlikely(bucket != nullptr));
+                    }
+
+                    return size;
+                }
+#if 1
+                size_type
+                ht_status(bool is_increase, bool just_print)
+                {
+                    pool_base pop = get_pool_base();
+                    if (try_lock(pop, &status_lock) && !is_increase)
+                        return 0;
+
+                    clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid)); //æ˜¯å¦è¦æ‹·è´æ“ä½œ
+                    clht_hashtable_s *ht_ptr = m->ht.get_address(my_pool_uuid);
+                    difference_type n_buckets = (difference_type)ht_ptr->num_buckets;
+                    bucket_s *bucket = nullptr;
+                    size_type size = 0;
+                    int expands = 0;
+                    int expands_max = 0;
+
+                    for (difference_type idx = 0; idx < n_buckets; idx++)
+                    {
+                        bucket = &ht_ptr->table[idx];
+
+                        int expands_cont = -1;
+                        expands--;
+                        do
+                        {
+                            expands_cont++;
+                            expands++;
+                            for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
+                            {
+                                if (bucket->slots[j] != nullptr)
+                                    size++;
+                            }
+
+                            bucket = bucket->next.get_address(my_pool_uuid);
+                        } while (unlikely(bucket != nullptr));
+
+                        if (expands_cont > expands_max)
+                            expands_max = expands_cont;
+                    }
+
+                    double full_ratio = 100.0 * size / (n_buckets * ENTRIES_PER_BUCKET);
+
+                    if (just_print)
+                    {
+                        printf("[STATUS-%02d] #bu: %7zu / #elems: %7zu / full%%: %8.4f%% / expands: %4d / max expands: %2d\n",
+                               99, n_buckets, size, full_ratio, expands, expands_max);
+                    }
+                    else
+                    {
+                        if (full_ratio > 0 && full_ratio < CLHT_PERC_FULL_HALVE) //loadfactor<5%
+                        {
+                            ht_resize_pes(false /* is_increase */, (size_t)33); //è°ƒç”¨ht_resize_peså‡½æ•°
+                        }
+                        else if ((full_ratio > 0 && full_ratio > CLHT_PERC_FULL_DOUBLE) || expands_max > CLHT_MAX_EXPANSIONS || is_increase)
+                        {
+                            uint64_t inc_by = (uint64_t)(full_ratio / CLHT_OCCUP_AFTER_RES); //inc_byå¢é•¿æ¯”ä¾‹ï¼Œåé¢éœ€è¦å˜æˆ2çš„næ¬¡æ–¹ã€‚
+                            int inc_by_pow2 = pow2roundup(inc_by);
+
+                            if (inc_by_pow2 == 1)
+                            {
+                                inc_by_pow2 = 2;
+                            }
+                            int ret = ht_resize_pes(true /* is_increase */,
+                                                    (size_t)inc_by_pow2); //pesä»£è¡¨å•¥æ„æ€ï¼Ÿ
+                            // return if crashed
+                            if (ret == -1)
+                                return 0;
+                        }
+                    }
+
+                    unlock(pop, &status_lock);
+                    return size;
+                }
+#endif
+                //å¤šçº¿ç¨‹ååŒæ‰©å®¹
+                int ht_multithread_resize(bool is_increase, size_t by = 2)
+                {
+                    pool_base pop = get_pool_base();
+                    clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid));
+                    m->ht_oldest = m->ht.get_address(my_pool_uuid);
+                    size_t fixed_bucket_num = m->ht_oldest->num_buckets % resize_threads_num == 0 ? m->ht_oldest->num_buckets / resize_threads_num : m->ht_oldest->num_buckets / resize_threads_num + 1;
+
+                    size_t num_buckets_new;
+                    if (is_increase)
+                    {
+                        num_buckets_new = pow2roundup(by * m->ht_oldest->num_buckets);
+                    }
+                    persistent_ptr<clht_hashtable_s> ht_tmp;
+                    transaction::run(pop, [&] {
+                        // A transaction is required as the constructor of clht_hashtable_s
+                        // invokes "make_persistent".
+                        ht_tmp = make_persistent<clht_hashtable_s>(num_buckets_new); //ä»¥äº‹åŠ¡çš„æ–¹å¼è¿›è¡Œä¸´æ—¶çš„æ‰©å®¹çš„æ•£åˆ—è¡¨æ„å»ºï¼ä¿è¯ä¸€è‡´æ€§ã€‚
+                    });
+
+                    clht_hashtable_s *ht_new = ht_tmp.get();
+                    ht_new->version = m->ht_oldest->version + 1;
+
+                    //å¤šçº¿ç¨‹å¹¶å‘rehashing
+                    for (size_type i = 0; i < resize_threads_num; i++)
+                    {
+                    }
+                    if (m->is_resizing)
+                    { //å¦‚æœå½“å‰æ•£åˆ—è¡¨æ­£åœ¨æ‰©å®¹ï¼Œé‚£å°±å¤šçº¿ç¨‹æ‰©å®¹
+                        if (resize_bucket_num > 0)
+                        { //è¡¨ç¤ºå½“å‰æ‰©å®¹æ“ä½œè¿˜æœªå®Œæˆï¼Œåªæœ‰resize_bucket_numä¸º0æ—¶æ‰è¡¨ç¤ºæ‰©å®¹å®Œæ¯•
+                            if (resize_bucket_num - fixed_bucket_num <= 0)
+                            {
+                                for (difference_type idx = 0;
+                                     idx < (difference_type)resize_bucket_num; idx++)
+                                {
+                                    bucket_s *bu_cur = &m->ht_oldest->table[idx]; // oldest? bug
+                                    bucket_cpy(bu_cur, ht_new);
+                                }
+                                ht_new->table_prev = m->ht;
+                                pop.drain();
+
+                                //switch to the new hash table
+                                m->ht.off = ht_tmp.raw().off;
+                                pop.persist(&m->ht.off, sizeof(clht_hashtable_ptr_t));
+                                m->ht_oldest->table_new.off = ht_tmp.raw().off;
+                                pop.persist(&m->ht_oldest->table_new.off, sizeof(clht_hashtable_ptr_t));
+                                std::lock_guard<std::mutex> guard(resize_bucket_num_mutex);
+                                resize_bucket_num = 0;
+                                m->is_resizing = false;
+                                pop.persist(&m->is_resizing, sizeof(bool));
+                                return 1; //è¡¨ç¤ºå¤šçº¿ç¨‹æ‰©å®¹å®Œæ¯•
+                            }
+                            else
+                            {
+                                std::lock_guard<std::mutex> guard(resize_bucket_num_mutex);
+                                resize_bucket_num = resize_bucket_num - fixed_bucket_num;
+                                for (difference_type idx = resize_bucket_num; idx < resize_bucket_num + fixed_bucket_num; idx++)
+                                {
+                                    //idx < (difference_type)resize_bucket_num; idx++) // what's the logic operation should be here? bug
+                                    {
+                                        bucket_s *bu_cur = &m->ht_oldest->table[idx]; // oldest? bug
+                                        bucket_cpy(bu_cur, ht_new);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
-                bucket = bucket->next.get_address(my_pool_uuid);
-                std::cout << " ** -> ";
-            } while (unlikely(bucket != nullptr));
-            std::cout << std::endl;
-        }
+                /// Round up to next higher power of 2 (return x if it's already a power
+                /// of 2) for 32-bit numbersÂ·
+                static inline uint64_t
+                pow2roundup(uint64_t x)
+                {
+                    if (x == 0)
+                        return 1;
+                    --x;
+                    x |= x >> 1;
+                    x |= x >> 2;
+                    x |= x >> 4;
+                    x |= x >> 8;
+                    x |= x >> 16;
+                    x |= x >> 32;
+                    return x + 1;
+                }
+#if 1
+                /**
+     * Perform actual resizing. using multi-threaded collaborative concurrent resizing within a resize_lock.//lock-based multi-threaded concurrent resizing
+     * ä¸ºäº†é˜²æ­¢è¿‡åº¦ä¼˜åŒ–ï¼Œå…³é”®æ˜¯å¦‚ä½•è¿›è¡ŒåŸºäºå•lockçš„å¤šçº¿ç¨‹å¹¶å‘æ‰©å®¹ï¼ˆæ˜¯å¦å¯ä»¥å®ç°---æŠ€æœ¯å¯è¡Œæ€§æ–¹é¢ï¼‰
+    */
+                int
+                ht_resize_pes(bool is_increase, size_t by)
+                {
+                    pool_base pop = get_pool_base();
+                    clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid)); //é™æ€ç±»å‹è½¬æ¢å¹¶éæ˜¯çœŸæ­£çš„æ‹·è´æ“ä½œã€‚
+                    clht_hashtable_s *ht_old = m->ht.get_address(my_pool_uuid);
+                    if (try_lock(pop, &resize_lock))
+                        return 0;
 
-        fflush(stdout);
-    }
+                    size_t num_buckets_new;
+                    if (is_increase)
+                    {
+                        /* num_buckets_new = CLHT_RATIO_DOUBLE * ht_old->num_buckets; */
+                        num_buckets_new = by * ht_old->num_buckets;
+                    }
+                    else
+                    {
+#if CLHT_HELP_RESIZE == 1
+                        ht_old->is_helper = 0;
+#endif
+                        num_buckets_new = ht_old->num_buckets / CLHT_RATIO_HALVE; //è¿™ä¸ªæ˜¯å‹ç¼©è¡¨ç©ºé—´å˜›ï¼Ÿå¤§å°å˜ä¸º1/8ï¼
+                    }
 
-    uint64_t
-    capacity()
-    {
-    	clht_meta *m = static_cast<clht_meta  *>(meta(my_pool_uuid));
-	    clht_hashtable_s *hashtable = m->ht.get_address(my_pool_uuid);//ĞèÒª×öÊÊÅäĞŞ¸Ä
-	    difference_type n_buckets = (difference_type)hashtable->num_buckets;
+                    persistent_ptr<clht_hashtable_s> ht_tmp;
+                    transaction::run(pop, [&] {
+                        // A transaction is required as the constructor of clht_hashtable_s
+                        // invokes "make_persistent".
+                        ht_tmp = make_persistent<clht_hashtable_s>(num_buckets_new); //ä»¥äº‹åŠ¡çš„æ–¹å¼è¿›è¡Œä¸´æ—¶çš„æ‰©å®¹çš„æ•£åˆ—è¡¨æ„å»ºï¼ä¿è¯ä¸€è‡´æ€§ã€‚
+                    });
 
-        uint64_t num = 0;
-        for (difference_type idx = 0; idx < n_buckets; idx++)
-        {
-            bucket_s *bucket = &hashtable->table[idx];
-            do
-            {
-                num++;//bucket num
-                bucket = bucket->next.get_address(my_pool_uuid);
-            } while (unlikely(bucket != nullptr));
-        }
+                    clht_hashtable_s *ht_new = ht_tmp.get();
+                    ht_new->version = ht_old->version + 1; //ä»¥ç‰ˆæœ¬åŒ–æ–¹å¼ä¿è¯æ•£åˆ—è¡¨æ›´æ–°çš„ä¸€è‡´æ€§ã€‚è¿™é‡Œçš„ht_newå’Œht_oldæ˜¯å¦éœ€è¦åŒmetaè¿›è¡Œè”ç³»ã€‚
+/*
+* ä»¥ä¸‹è¿™éƒ¨åˆ†æ˜¯å¤šçº¿ç¨‹å¹¶è¡Œæ‰©å®¹çš„å…³é”®éƒ¨ä»¶ï¼
+*/
+#if CLHT_HELP_RESIZE == 1
+                    ht_old->table_tmp.off = ht_tmp.raw().off;
+                    pop.persist(&ht_old->table_tmp.off, sizeof(clht_hashtable_ptr_t));
 
-        return num * ENTRIES_PER_BUCKET;
-    }
+                    for (difference_type idx = 0;
+                         idx < (difference_type)ht_old->num_buckets; idx++)
+                    {
+                        bucket_s *bu_cur = &ht_old->table[idx];
+                        int ret = bucket_cpy(bu_cur, ht_new);
+                        /* reached a point where the helper is handling */
+                        if (ret == -1)
+                            return -1;
 
-	clht_meta_ptr_t meta;
-//	p<uint64_t> resize_bucket_num;//×Ô¼ºÔö¼ÓµÄ£¬³õÊ¼ÖµÎª×î¾É±íµÄ×ÜbucketÊı£¬Îª0Ê±±íÊ¾¶àÏß³ÌĞ­Í¬À©ÈİÍê³É£¬Ã¿¸öÀ©ÈİÏß³ÌÃ¿´ÎÈ¡¹Ì¶¨ÊıÁ¿µÄbucket½øĞĞÀ©Èİ£¬¶à¸öÀ©ÈİÏß³Ì¿ÉÒÔÍ¬Ê±½øĞĞÀ©Èİ²Ù×÷¡£
-	p<size_type> resize_threads_num=2;//Ä¬ÈÏÀ©ÈİÏß³ÌÊıÎª2£¬¿É¶¯Ì¬µ÷Õû
-		
-	p<size_type> work_threads_num;//Ö¸µÄÊÇwork_thread_num
-	p<std::atomic<bool>> run_expand_threads;
-//    clht_hashtable_ptr_t ht;
-//    uint8_t next_cache_line[CACHE_LINE_SIZE - (sizeof(clht_hashtable_ptr_t))];
-//    clht_hashtable_ptr_t ht_oldest;
-//    ht_ts_ptr_t version_list;
-//    size_t version_min;
-	persistent_ptr<persistent_ptr<clht_meta>[]> tmp_meta;
-	persistent_ptr<persistent_ptr<value_type>[]> tmp_entry;
+                        if (!ret)
+                            break;
+                    }
 
-	std::vector<std::thread> resize_threads;
-    clht_lock_t resize_lock;
-//    clht_lock_t gc_lock;
-    clht_lock_t status_lock;
+                    if (is_increase && ht_old->is_helper != 1) /* there exist a helper */
+                    {
+                        while (ht_old->helper_done != 1)
+                            atomic_backoff(); //é˜»å¡ä»¥ç­‰å¾…å®Œæˆï¼
+                    }
+#else
+                    for (difference_type idx = 0;
+                         idx < (difference_type)ht_old->num_buckets; idx++)
+                    {
+                        bucket_s *bu_cur = &ht_old->table[idx];
+                        int ret = bucket_cpy(bu_cur, ht_new);
+                        if (ret == -1) //æ­¤å¤„çš„è¿”å›å€¼-1è¡¨ç¤ºä»€ä¹ˆæ„æ€ï¼Ÿ
+                            return -1;
+                    }
+#endif
 
-    /** ID of persistent memory pool where hash map resides. */
-    p<uint64_t> my_pool_uuid;
+                    ht_new->table_prev = m->ht;
+                    int ht_resize_again = 0;
+                    if (ht_new->num_expands >= ht_new->num_expands_threshold)
+                    {
+                        ht_resize_again = 1;
+                    }
+
+                    pop.drain();
+
+                    // Switch to the new hash table
+                    m->ht.off = ht_tmp.raw().off;
+                    pop.persist(&m->ht.off, sizeof(clht_hashtable_ptr_t));
+                    ht_old->table_new.off = ht_tmp.raw().off;
+                    pop.persist(&ht_old->table_new.off, sizeof(clht_hashtable_ptr_t));
+
+                    unlock(pop, &resize_lock);
+
+                    if (ht_resize_again)
+                        ht_status(true /* is_increase */, false /* just_print */);
+
+                    return 1;
+                }
+#endif
+
+                int
+                bucket_cpy(bucket_s *bucket, clht_hashtable_s *ht_new)
+                {
+                    /*       if (!lock_acq_resize(&bucket->lock))//éœ€è¦åšé€‚é…ä¿®æ”¹æˆ–ç›´æ¥åˆ é™¤
+            return 0;
+       */
+
+                    do
+                    {
+                        for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
+                        {
+                            if (bucket->slots[j] != nullptr)
+                            {
+                                hv_type hv = hasher{}(
+                                    bucket->slots[j].get_address(my_pool_uuid)->first);
+                                difference_type idx = static_cast<difference_type>(
+                                    hv % static_cast<hv_type>(ht_new->num_buckets));
+                                put_seq(ht_new, bucket->slots[j], idx);
+                            }
+                        }
+                        bucket = bucket->next.get_address(my_pool_uuid);
+                    } while (unlikely(bucket != nullptr));
+
+                    return 1;
+                }
+
+                bool
+                put_seq(clht_hashtable_s *hashtable, kv_ptr_t slot, difference_type idx)
+                {
+                    pool_base pop = get_pool_base();
+                    //		clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid));
+                    bucket_s *bucket = &hashtable->table[idx];
+
+                    do
+                    {
+                        for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
+                        {
+                            if (bucket->slots[j] == nullptr)
+                            {
+                                bucket->slots[j] = slot;
+                                pop.persist(&bucket->slots[j].off, sizeof(kv_ptr_t));
+                                return true;
+                            }
+                        }
+
+                        if (bucket->next == NULL)
+                        {
+                            //            int null;
+                            bucket_ptr_t b_new = clht_bucket_create_stats(
+                                pop, hashtable, meta); //the third parameter can't be nullï¼Œmust be nullptr or 0
+                            kv_ptr_t &s_new = b_new(my_pool_uuid)->slots[0];
+                            s_new.off = slot.off;
+                            pop.persist(&s_new.off, sizeof(kv_ptr_t));
+                            return true;
+                        }
+
+                        bucket = bucket->next.get_address(my_pool_uuid);
+                    } while (true);
+                }
+
+                void
+                ht_resize_help(clht_hashtable_s *hashtable)
+                {
+                    if ((int32_t)__sync_fetch_and_sub(
+                            (volatile uint32_t *)&hashtable->is_helper, 1) <= 0)
+                        return;
+
+                    for (difference_type idx = (difference_type)hashtable->hash;
+                         idx >= 0; idx--)
+                    {
+                        bucket_s *bucket = &hashtable->table[idx];
+                        if (!bucket_cpy(
+                                bucket, hashtable->table_tmp.get_address(my_pool_uuid)))
+                            break;
+                    }
+
+                    hashtable->helper_done = 1;
+                }
+
+                void
+                print()
+                {
+                    clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid));
+                    clht_hashtable_s *hashtable = m->ht.get_address(my_pool_uuid); //éœ€è¦åšé€‚é…ä¿®æ”¹ï¼Œè”ç³»ä¸Šmeta
+                    difference_type n_buckets = (difference_type)hashtable->num_buckets;
+                    std::cout << "Number of buckets: " << n_buckets << std::endl;
+
+                    for (difference_type idx = 0; idx < n_buckets; idx++)
+                    {
+                        bucket_s *bucket = &hashtable->table[idx];
+                        std::cout << "[[" << idx << "]]";
+
+                        do
+                        {
+                            for (size_t j = 0; j < ENTRIES_PER_BUCKET; j++)
+                            {
+                                if (bucket->slots[j] != nullptr)
+                                {
+                                    value_type *e =
+                                        bucket->slots[j].get_address(my_pool_uuid);
+                                    std::cout << "(" << e->first
+                                              << "/" << e.second << ")-> ";
+                                }
+                            }
+
+                            bucket = bucket->next.get_address(my_pool_uuid);
+                            std::cout << " ** -> ";
+                        } while (unlikely(bucket != nullptr));
+                        std::cout << std::endl;
+                    }
+
+                    fflush(stdout);
+                }
+
+                uint64_t
+                capacity()
+                {
+                    clht_meta *m = static_cast<clht_meta *>(meta(my_pool_uuid));
+                    clht_hashtable_s *hashtable = m->ht.get_address(my_pool_uuid); //éœ€è¦åšé€‚é…ä¿®æ”¹
+                    difference_type n_buckets = (difference_type)hashtable->num_buckets;
+
+                    uint64_t num = 0;
+                    for (difference_type idx = 0; idx < n_buckets; idx++)
+                    {
+                        bucket_s *bucket = &hashtable->table[idx];
+                        do
+                        {
+                            num++; //bucket num
+                            bucket = bucket->next.get_address(my_pool_uuid);
+                        } while (unlikely(bucket != nullptr));
+                    }
+
+                    return num * ENTRIES_PER_BUCKET;
+                }
+
+                clht_meta_ptr_t meta;
+                unsigned thread_num;
+                //	p<uint64_t> resize_bucket_num;//è‡ªå·±å¢åŠ çš„ï¼Œåˆå§‹å€¼ä¸ºæœ€æ—§è¡¨çš„æ€»bucketæ•°ï¼Œä¸º0æ—¶è¡¨ç¤ºå¤šçº¿ç¨‹ååŒæ‰©å®¹å®Œæˆï¼Œæ¯ä¸ªæ‰©å®¹çº¿ç¨‹æ¯æ¬¡å–å›ºå®šæ•°é‡çš„bucketè¿›è¡Œæ‰©å®¹ï¼Œå¤šä¸ªæ‰©å®¹çº¿ç¨‹å¯ä»¥åŒæ—¶è¿›è¡Œæ‰©å®¹æ“ä½œã€‚
+                p<size_type> resize_threads_num = 2; //é»˜è®¤æ‰©å®¹çº¿ç¨‹æ•°ä¸º2ï¼Œå¯åŠ¨æ€è°ƒæ•´
+
+                p<size_type> work_threads_num; //æŒ‡çš„æ˜¯work_thread_num
+                p<std::atomic<bool>> run_expand_thread;
+                //    clht_hashtable_ptr_t ht;
+                //    uint8_t next_cache_line[CACHE_LINE_SIZE - (sizeof(clht_hashtable_ptr_t))];
+                //    clht_hashtable_ptr_t ht_oldest;
+                //    ht_ts_ptr_t version_list;
+                //    size_t version_min;
+                persistent_ptr<persistent_ptr<clht_meta>[]> tmp_meta;
+                persistent_ptr<persistent_ptr<value_type>[]> tmp_entry;
+
+                std::vector<std::thread> resize_threads;
+                clht_lock_t resize_lock;
+                //    clht_lock_t gc_lock;
+                clht_lock_t status_lock;
+
+                /** ID of persistent memory pool where hash map resides. */
+                p<uint64_t> my_pool_uuid;
 
 #ifdef LFCLHT_DEBUG
-	std::vector<std::fstream> thread_logs;
+                std::vector<std::fstream> thread_logs;
 #endif
-};
+            };
 
-} /* namespace experimental */
-} /* namespace obj */
+        } /* namespace experimental */
+    }     /* namespace obj */
 } /* namespace pmem */
 
 #endif /* PMEMOBJ_CLHT_HPP */
-

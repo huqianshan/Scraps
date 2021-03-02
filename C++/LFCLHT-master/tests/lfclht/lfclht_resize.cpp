@@ -18,7 +18,7 @@
 #include "../../examples/libpmemobj_cpp_examples_common.hpp"
 #include "../polymorphic_string.h"
 #include "../profile.hpp"
-#include <libpmemobj++/experimental/lf_clht.hpp>//  ≈‰–ﬁ∏ƒ‘¥Œƒº˛
+#include <libpmemobj++/experimental/lf_clht.hpp> //ÈÄÇÈÖç‰øÆÊîπÊ∫êÊñá‰ª∂
 
 #define LAYOUT "lfclht"
 #define KEY_LEN 15
@@ -32,79 +32,85 @@ namespace nvobj = pmem::obj;
 namespace
 {
 
-class key_equal {
-public:
-	template <typename M, typename U>
-	bool operator()(const M &lhs, const U &rhs) const
+	class key_equal
 	{
-		return lhs == rhs;
-	}
-};
-
-class string_hasher {
-	/* hash multiplier used by fibonacci hashing */
-	static const size_t hash_multiplier = 11400714819323198485ULL;
-
-public:
-	using transparent_key_equal = key_equal;
-
-	size_t operator()(const polymorphic_string &str) const
-	{
-		return hash(str.c_str(), str.size());
-	}
-
-	// size_t operator()(string_view str) const
-	// {
-	// 	return hash(str.data(), str.size());
-	// }
-
-private:
-	size_t hash(const char *str, size_t size) const
-	{
-		size_t h = 0;
-		for (size_t i = 0; i < size; ++i) {
-			h = static_cast<size_t>(str[i]) ^ (h * hash_multiplier);
+	public:
+		template <typename M, typename U>
+		bool operator()(const M &lhs, const U &rhs) const
+		{
+			return lhs == rhs;
 		}
-		return h;
-	}
-};
+	};
 
-using string_t = polymorphic_string;
-typedef nvobj::experimental::lfclht<string_t, string_t, string_hasher,
-	std::equal_to<string_t>>
-	persistent_map_type;
+	class string_hasher
+	{
+		/* hash multiplier used by fibonacci hashing */
+		static const size_t hash_multiplier = 11400714819323198485ULL;
 
-struct root {
-	nvobj::persistent_ptr<persistent_map_type> cons;
-};
+	public:
+		using transparent_key_equal = key_equal;
 
-enum class lfclht_op {
-	UNKNOWN,
-	INSERT,
-	READ,
+		size_t operator()(const polymorphic_string &str) const
+		{
+			return hash(str.c_str(), str.size());
+		}
 
-	MAX_OP
-};
+		// size_t operator()(string_view str) const
+		// {
+		// 	return hash(str.data(), str.size());
+		// }
 
-struct thread_queue {
-	string_t key;
-	lfclht_op operation;
-};
+	private:
+		size_t hash(const char *str, size_t size) const
+		{
+			size_t h = 0;
+			for (size_t i = 0; i < size; ++i)
+			{
+				h = static_cast<size_t>(str[i]) ^ (h * hash_multiplier);
+			}
+			return h;
+		}
+	};
 
-struct sub_thread {
-	uint32_t id;
-	uint64_t inserted;
-	uint64_t found;
-	uint64_t unfound;
-	uint64_t thread_num;
-	thread_queue *run_queue;
-	double *latency_queue;
-};
+	using string_t = polymorphic_string;
+	typedef nvobj::experimental::lfclht<string_t, string_t, string_hasher,
+										std::equal_to<string_t>>
+		persistent_map_type;
 
-} /* Annoymous namespace */
+	struct root
+	{
+		nvobj::persistent_ptr<persistent_map_type> cons;
+	};
 
-int
-main(int argc, char *argv[])
+	enum class lfclht_op
+	{
+		UNKNOWN,
+		INSERT,
+		READ,
+
+		MAX_OP
+	};
+
+	struct thread_queue
+	{
+		string_t key;
+		lfclht_op operation;
+	};
+
+	struct sub_thread
+	{
+		uint32_t id;
+		uint64_t inserted;
+		uint64_t found;
+		uint64_t unfound;
+		uint64_t thread_num;
+		thread_queue *run_queue;
+		double *latency_queue;
+	};
+
+} // namespace
+
+int main(int argc, char *argv[])
 {
 	char *ptr = getenv("PMEM_WRITE_LATENCY_IN_NS");
 	if (ptr)
@@ -117,7 +123,8 @@ main(int argc, char *argv[])
 #endif
 
 	// parse inputs
-	if (argc != 3) {
+	if (argc != 3)
+	{
 		printf("usage: %s <pool_path> <load_file>\n", argv[0]);
 		exit(1);
 	}
@@ -136,7 +143,7 @@ main(int argc, char *argv[])
 		nvobj::transaction::manual tx(pop);
 
 		proot->cons = nvobj::make_persistent<persistent_map_type>((uint64_t)N_BUCKETS);
-//“‘œ¬ «∑«≥£÷ÿ“™µƒ…Ë÷√£¨”»∆‰∂‘∂‡œﬂ≥Ã∂¯—‘£¨Œ¥…Ë÷√µƒª∞º´“◊‘Ï≥…∂Œ¥ÌŒÛsegment fault£®core dumped£©
+		//‰ª•‰∏ãÊòØÈùûÂ∏∏ÈáçË¶ÅÁöÑËÆæÁΩÆÔºåÂ∞§ÂÖ∂ÂØπÂ§öÁ∫øÁ®ãËÄåË®ÄÔºåÊú™ËÆæÁΩÆÁöÑËØùÊûÅÊòìÈÄ†ÊàêÊÆµÈîôËØØsegment faultÔºàcore dumpedÔºâ
 		proot->cons->set_thread_num(1);
 		nvobj::transaction::commit();
 	}
@@ -161,17 +168,20 @@ main(int argc, char *argv[])
 	fprintf(fout, "inserted,capacity,load_factor\n");
 	printf("Load phase begins \n");
 
-	while (getline(&pbuf, &len, ycsb) != -1) {
-		if (strncmp(buf, "INSERT", 6) == 0) {//∞¥size±»Ωœ¡Ω∏ˆ◊÷∑˚¥Æµƒπÿœµ
+	while (getline(&pbuf, &len, ycsb) != -1)
+	{
+		if (strncmp(buf, "INSERT", 6) == 0)
+		{ //ÊåâsizeÊØîËæÉ‰∏§‰∏™Â≠óÁ¨¶‰∏≤ÁöÑÂÖ≥Á≥ª
 			string_t key(buf + 7, KEY_LEN);
-//test
+			//test
 			printf("before map->put\n");
 
-			auto ret = map->put(persistent_map_type::value_type(key, key),1, loaded);//  ≈‰–ﬁ∏ƒÃÌº”thread_idŒ™1.
-//test
+			auto ret = map->put(persistent_map_type::value_type(key, key), 1, loaded); //ÈÄÇÈÖç‰øÆÊîπÊ∑ªÂä†thread_id‰∏∫1.
+																					   //test
 			printf("after map->put\n");
-			
-			if (!ret.found) {
+
+			if (!ret.found)
+			{
 				loaded++;
 				// if (loaded % 10000 == 0)
 				// 	std::cout << "[SUCCESS] inserted " << loaded
@@ -183,13 +193,15 @@ main(int argc, char *argv[])
 				if (loaded % 10000 == 0)
 				{
 					std::cout << "Load factor: "
-						<< (loaded - 1) * 1.0 / ret.capacity
-						<< " inserted: " << loaded
-						<< " capacity: " << ret.capacity << std::endl;
+							  << (loaded - 1) * 1.0 / ret.capacity
+							  << " inserted: " << loaded
+							  << " capacity: " << ret.capacity << std::endl;
 					fprintf(fout, "%ld,%ld,%f\n", loaded, ret.capacity,
-						(loaded - 1) * 1.0 / ret.capacity);
+							(loaded - 1) * 1.0 / ret.capacity);
 				}
-			} else {
+			}
+			else
+			{
 				break;
 			}
 		}

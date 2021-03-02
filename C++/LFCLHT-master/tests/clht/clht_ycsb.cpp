@@ -14,9 +14,9 @@
 #include "../../examples/libpmemobj_cpp_examples_common.hpp"
 #include "../polymorphic_string.h"
 #include "../profile.hpp"
-#include <libpmemobj++/experimental/clht.hpp> 	//–Ë“™  ≈‰–ﬁ∏ƒ∂‘”¶µƒ‘¥¬ÎŒƒº˛
+#include <libpmemobj++/experimental/clht.hpp> //ÈúÄË¶ÅÈÄÇÈÖç‰øÆÊîπÂØπÂ∫îÁöÑÊ∫êÁ†ÅÊñá‰ª∂
 
-#define LAYOUT "clht" //–Ë“™  ≈‰–ﬁ∏ƒ
+#define LAYOUT "clht" //ÈúÄË¶ÅÈÄÇÈÖç‰øÆÊîπ
 #define KEY_LEN 15
 #define VALUE_LEN 16
 #define LATENCY_ENABLE 1
@@ -42,79 +42,85 @@ namespace nvobj = pmem::obj;
 namespace
 {
 
-class key_equal {
-public:
-	template <typename M, typename U>
-	bool operator()(const M &lhs, const U &rhs) const
+	class key_equal
 	{
-		return lhs == rhs;
-	}
-};
-
-class string_hasher {
-	/* hash multiplier used by fibonacci hashing */
-	static const size_t hash_multiplier = 11400714819323198485ULL;
-
-public:
-	using transparent_key_equal = key_equal;
-
-	size_t operator()(const polymorphic_string &str) const
-	{
-		return hash(str.c_str(), str.size());
-	}
-
-private:
-	size_t hash(const char *str, size_t size) const
-	{
-		size_t h = 0;
-		for (size_t i = 0; i < size; ++i) {
-			h = static_cast<size_t>(str[i]) ^ (h * hash_multiplier);
+	public:
+		template <typename M, typename U>
+		bool operator()(const M &lhs, const U &rhs) const
+		{
+			return lhs == rhs;
 		}
-		return h;
-	}
-};
+	};
 
-using string_t = polymorphic_string;
-typedef nvobj::experimental::clht<string_t, string_t, string_hasher,
-	std::equal_to<string_t>>
-	persistent_map_type;
+	class string_hasher
+	{
+		/* hash multiplier used by fibonacci hashing */
+		static const size_t hash_multiplier = 11400714819323198485ULL;
 
-struct root {
-	nvobj::persistent_ptr<persistent_map_type> cons;
-};
+	public:
+		using transparent_key_equal = key_equal;
 
-enum class clht_op {
-	UNKNOWN,
-	INSERT,
-	READ,
-	DELETE,
-	UPDATE,
+		size_t operator()(const polymorphic_string &str) const
+		{
+			return hash(str.c_str(), str.size());
+		}
 
-	MAX_OP
-};
+	private:
+		size_t hash(const char *str, size_t size) const
+		{
+			size_t h = 0;
+			for (size_t i = 0; i < size; ++i)
+			{
+				h = static_cast<size_t>(str[i]) ^ (h * hash_multiplier);
+			}
+			return h;
+		}
+	};
 
-struct thread_queue {
-	string_t key;
-	clht_op operation;
-};
+	using string_t = polymorphic_string;
+	typedef nvobj::experimental::clht<string_t, string_t, string_hasher,
+									  std::equal_to<string_t>>
+		persistent_map_type;
 
-struct sub_thread {
-	uint32_t id;
-	uint64_t inserted;
-	uint64_t ins_failure;
-	uint64_t found;
-	uint64_t unfound;
-	uint64_t deleted;
-	uint64_t del_existing;
-	uint64_t thread_num;
-	thread_queue *run_queue;
-	double *latency_queue;
-};
+	struct root
+	{
+		nvobj::persistent_ptr<persistent_map_type> cons;
+	};
 
-} /* Annoymous namespace */
+	enum class clht_op
+	{
+		UNKNOWN,
+		INSERT,
+		READ,
+		DELETE,
+		UPDATE,
 
-int
-main(int argc, char *argv[])
+		MAX_OP
+	};
+
+	struct thread_queue
+	{
+		string_t key;
+		clht_op operation;
+	};
+
+	struct sub_thread
+	{
+		uint32_t id;
+		uint64_t inserted;
+		uint64_t ins_failure;
+		uint64_t found;
+		uint64_t unfound;
+		uint64_t deleted;
+		uint64_t del_existing;
+		uint64_t thread_num;
+		thread_queue *run_queue;
+		double *latency_queue;
+	};
+
+} // namespace
+
+int main(int argc, char *argv[])
 {
 	char *ptr = getenv("PMEM_WRITE_LATENCY_IN_NS");
 	if (ptr)
@@ -127,7 +133,8 @@ main(int argc, char *argv[])
 #endif
 
 	// parse inputs
-	if (argc != 5) {
+	if (argc != 5)
+	{
 		printf("usage: %s <pool_path> <load_file> <run_file> <thread_num>\n", argv[0]);
 		exit(1);
 	}
@@ -161,7 +168,6 @@ main(int argc, char *argv[])
 	printf("initialization done.\n");
 	printf("initial capacity %ld\n", map->capacity());
 
-
 	// load benchmark files
 	FILE *ycsb, *ycsb_read;
 	char buf[1024];
@@ -178,13 +184,18 @@ main(int argc, char *argv[])
 
 	printf("Load phase begins \n");
 
-	while (getline(&pbuf, &len, ycsb) != -1) {
-		if (strncmp(buf, "INSERT", 6) == 0) {
+	while (getline(&pbuf, &len, ycsb) != -1)
+	{
+		if (strncmp(buf, "INSERT", 6) == 0)
+		{
 			string_t key(buf + 7, KEY_LEN);
 			auto ret = map->put(persistent_map_type::value_type(key, key), loaded);
-			if (!ret.found) {
+			if (!ret.found)
+			{
 				loaded++;
-			} else {
+			}
+			else
+			{
 				break;
 			}
 		}
@@ -192,67 +203,74 @@ main(int argc, char *argv[])
 	fclose(ycsb);
 	printf("Load phase finishes: %ld items are inserted \n", loaded);
 
-    // prepare data for the run phase
-	if ((ycsb_read = fopen(argv[3], "r")) == NULL) {
+	// prepare data for the run phase
+	if ((ycsb_read = fopen(argv[3], "r")) == NULL)
+	{
 		printf("fail to read %s\n", argv[3]);
 		exit(1);
 	}
 
-	thread_queue* run_queue[thread_num];
-	double* latency_queue[thread_num];
-    int move[thread_num];
-    for(size_t t = 0; t < thread_num; t ++){
-        run_queue[t] = (thread_queue *)calloc(READ_WRITE_NUM / thread_num + 1, sizeof(thread_queue));
+	thread_queue *run_queue[thread_num];
+	double *latency_queue[thread_num];
+	int move[thread_num];
+	for (size_t t = 0; t < thread_num; t++)
+	{
+		run_queue[t] = (thread_queue *)calloc(READ_WRITE_NUM / thread_num + 1, sizeof(thread_queue));
 		latency_queue[t] = (double *)calloc(READ_WRITE_NUM / thread_num + 1, sizeof(double));
-        move[t] = 0;
-    }
+		move[t] = 0;
+	}
 
 	size_t operation_num = 0;
-	while(getline(&pbuf,&len,ycsb_read) != -1){
-		if(strncmp(buf, "INSERT", 6) == 0){
-			run_queue[operation_num%thread_num][move[operation_num%thread_num]].key = string_t(buf+7, KEY_LEN);
-			run_queue[operation_num%thread_num][move[operation_num%thread_num]].operation = clht_op::INSERT;
-			move[operation_num%thread_num] ++;
+	while (getline(&pbuf, &len, ycsb_read) != -1)
+	{
+		if (strncmp(buf, "INSERT", 6) == 0)
+		{
+			run_queue[operation_num % thread_num][move[operation_num % thread_num]].key = string_t(buf + 7, KEY_LEN);
+			run_queue[operation_num % thread_num][move[operation_num % thread_num]].operation = clht_op::INSERT;
+			move[operation_num % thread_num]++;
 		}
-		else if(strncmp(buf, "READ", 4) == 0){
-			run_queue[operation_num%thread_num][move[operation_num%thread_num]].key = string_t(buf+5, KEY_LEN);
-			run_queue[operation_num%thread_num][move[operation_num%thread_num]].operation = clht_op::READ;
-			move[operation_num%thread_num] ++;
+		else if (strncmp(buf, "READ", 4) == 0)
+		{
+			run_queue[operation_num % thread_num][move[operation_num % thread_num]].key = string_t(buf + 5, KEY_LEN);
+			run_queue[operation_num % thread_num][move[operation_num % thread_num]].operation = clht_op::READ;
+			move[operation_num % thread_num]++;
 		}
-		else if (strncmp(buf, "DELETE", 6) == 0){
-			run_queue[operation_num%thread_num][move[operation_num%thread_num]].key = string_t(buf+7, KEY_LEN);
-			run_queue[operation_num%thread_num][move[operation_num%thread_num]].operation = clht_op::DELETE;
-			move[operation_num%thread_num] ++;
+		else if (strncmp(buf, "DELETE", 6) == 0)
+		{
+			run_queue[operation_num % thread_num][move[operation_num % thread_num]].key = string_t(buf + 7, KEY_LEN);
+			run_queue[operation_num % thread_num][move[operation_num % thread_num]].operation = clht_op::DELETE;
+			move[operation_num % thread_num]++;
 		}
-		operation_num ++;
+		operation_num++;
 	}
 	fclose(ycsb_read);
 
-	sub_thread* THREADS = (sub_thread*)malloc(sizeof(sub_thread)*thread_num);
-    inserted = 0;
+	sub_thread *THREADS = (sub_thread *)malloc(sizeof(sub_thread) * thread_num);
+	inserted = 0;
 
 	printf("Run phase begins: %s \n", argv[3]);
-    for(size_t t = 0; t < thread_num; t++){
-        THREADS[t].id = t;
-        THREADS[t].inserted = 0;
+	for (size_t t = 0; t < thread_num; t++)
+	{
+		THREADS[t].id = t;
+		THREADS[t].inserted = 0;
 		THREADS[t].ins_failure = 0;
-        THREADS[t].found = 0;
+		THREADS[t].found = 0;
 		THREADS[t].unfound = 0;
 		THREADS[t].deleted = 0;
 		THREADS[t].del_existing = 0;
 		THREADS[t].thread_num = thread_num;
 		THREADS[t].run_queue = run_queue[t];
 		THREADS[t].latency_queue = latency_queue[t];
-    }
+	}
 
-    std::vector<std::thread> threads;
-    threads.reserve(thread_num);
+	std::vector<std::thread> threads;
+	threads.reserve(thread_num);
 
 	struct timespec start, end;
 #ifdef LATENCY_ENABLE
 	struct timespec stop;
 #endif
-    clock_gettime(CLOCK_MONOTONIC, &start);
+	clock_gettime(CLOCK_MONOTONIC, &start);
 
 	for (size_t i = 0; i < thread_num; i++)
 	{
@@ -264,13 +282,14 @@ main(int argc, char *argv[])
 				if (THREADS[thread_id].run_queue[j].operation == clht_op::INSERT)
 				{
 					auto ret = map->put(persistent_map_type::value_type(
-						THREADS[thread_id].run_queue[j].key,
-						THREADS[thread_id].run_queue[j].key), offset + j);//–Ë“™  ≈‰–ﬁ∏ƒ
+											THREADS[thread_id].run_queue[j].key,
+											THREADS[thread_id].run_queue[j].key),
+										offset + j); //ÈúÄË¶ÅÈÄÇÈÖç‰øÆÊîπ
 					if (!ret.found)
 					{
 						THREADS[thread_id].inserted++;
 					}
-                    else
+					else
 					{
 						THREADS[thread_id].ins_failure++;
 					}
@@ -278,7 +297,7 @@ main(int argc, char *argv[])
 				else if (THREADS[thread_id].run_queue[j].operation == clht_op::READ)
 				{
 					auto ret = map->get(persistent_map_type::key_type(
-						THREADS[thread_id].run_queue[j].key));//–Ë“™  ≈‰–ﬁ∏ƒ
+						THREADS[thread_id].run_queue[j].key)); //ÈúÄË¶ÅÈÄÇÈÖç‰øÆÊîπ
 					if (ret.found)
 					{
 						THREADS[thread_id].found++;
@@ -291,7 +310,7 @@ main(int argc, char *argv[])
 				else if (THREADS[thread_id].run_queue[j].operation == clht_op::DELETE)
 				{
 					auto ret = map->erase(persistent_map_type::key_type(
-						THREADS[thread_id].run_queue[j].key));//–Ë“™  ≈‰–ﬁ∏ƒ
+						THREADS[thread_id].run_queue[j].key)); //ÈúÄË¶ÅÈÄÇÈÖç‰øÆÊîπ
 					THREADS[thread_id].deleted++;
 					if (ret.found)
 					{
@@ -309,18 +328,21 @@ main(int argc, char *argv[])
 				assert(THREADS[thread_id].latency_queue[j] > 0);
 #endif
 			}
-		}, i);
+		},
+							 i);
 	}
 
-	for (auto &t : threads) {
+	for (auto &t : threads)
+	{
 		t.join();
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &end);
 	size_t elapsed = static_cast<size_t>((end.tv_sec - start.tv_sec) * 1000000000 +
-		(end.tv_nsec - start.tv_nsec));
+										 (end.tv_nsec - start.tv_nsec));
 
-	for (size_t t = 0; t < thread_num; ++t) {
+	for (size_t t = 0; t < thread_num; ++t)
+	{
 		inserted += THREADS[t].inserted;
 		ins_failure += THREADS[t].ins_failure;
 		found += THREADS[t].found;
@@ -331,7 +353,7 @@ main(int argc, char *argv[])
 
 	uint64_t total_slots = map->capacity();
 	printf("capacity (after insertion) %ld, load factor %f\n",
-		total_slots, (loaded + inserted) * 1.0 / total_slots);
+		   total_slots, (loaded + inserted) * 1.0 / total_slots);
 
 	printf("Insert operations: %ld loaded, %ld inserted, %ld failed\n", loaded, inserted, ins_failure);
 	printf("Read operations: %ld found, %ld not found\n", found, unfound);
@@ -346,19 +368,19 @@ main(int argc, char *argv[])
 	fclose(fp);
 
 #ifdef LATENCY_ENABLE
-    double start_time = start.tv_sec * 1000000000.0 + start.tv_nsec;
-    double latency = 0;
-    double total_latency = 0;
-    FILE *fp_time = fopen("clht_processing_time.txt", "w");
-    for (size_t t = 0; t < thread_num; ++t)
-    {
-        for (size_t i = 0; i < READ_WRITE_NUM / thread_num; i++)
-        {
-            latency = THREADS[t].latency_queue[i] - start_time;
-            total_latency += latency;
-            fprintf(fp_time, "%f\n", latency);
-        }
-    }
+	double start_time = start.tv_sec * 1000000000.0 + start.tv_nsec;
+	double latency = 0;
+	double total_latency = 0;
+	FILE *fp_time = fopen("clht_processing_time.txt", "w");
+	for (size_t t = 0; t < thread_num; ++t)
+	{
+		for (size_t i = 0; i < READ_WRITE_NUM / thread_num; i++)
+		{
+			latency = THREADS[t].latency_queue[i] - start_time;
+			total_latency += latency;
+			fprintf(fp_time, "%f\n", latency);
+		}
+	}
 	printf("Average time: %f (ns)\n", total_latency * 1.0 / READ_WRITE_NUM);
 
 	total_latency = 0;
@@ -370,13 +392,13 @@ main(int argc, char *argv[])
 		fprintf(fp_latency, "%f\n", latency);
 
 		for (size_t i = 1; i < READ_WRITE_NUM / thread_num; i++)
-        {
-            latency = THREADS[t].latency_queue[i] - THREADS[t].latency_queue[i-1];
-            total_latency += latency;
-            fprintf(fp_latency, "%f\n", latency);
-        }
+		{
+			latency = THREADS[t].latency_queue[i] - THREADS[t].latency_queue[i - 1];
+			total_latency += latency;
+			fprintf(fp_latency, "%f\n", latency);
+		}
 	}
-    printf("Average latency: %f (ns)\n", total_latency * 1.0 / READ_WRITE_NUM);
+	printf("Average latency: %f (ns)\n", total_latency * 1.0 / READ_WRITE_NUM);
 	FILE *fp_reslut = fopen("latency.txt", "w");
 	fprintf(fp_reslut, "%f", total_latency * 1.0 / READ_WRITE_NUM);
 	fclose(fp_reslut);
