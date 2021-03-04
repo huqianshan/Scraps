@@ -209,7 +209,7 @@ namespace pmem
                             clht_hashtable_ptr_t table_tmp;
                             clht_hashtable_ptr_t table_prev;
                             clht_hashtable_ptr_t table_new;
-                            volatile uint32_t num_expands;
+                            volatile uint32_t num_expands; // why volatile? 
                             union
                             {
                                 volatile uint32_t num_expands_threshold;

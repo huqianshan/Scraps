@@ -54,4 +54,5 @@ dkms.conf
 # vscode and cmakelists
 build/*
 bin/*
-.vscode/*
+**/.vscode/*
+
