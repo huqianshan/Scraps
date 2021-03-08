@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -50,6 +51,15 @@ void printf_node(Node *lt)
     }
     cout << endl;
 }
+
+void test_init(void)
+{
+    int a;
+    char c;
+    char d = 0;
+    printf("%x  %x\n", a, c);
+}
+
 int main()
 {
     Node *a = new Node(7);
@@ -66,4 +76,38 @@ int main()
     printf_node(reverseList(a));
 
     printf_node(reverseList_recur(e));
+
+    std::clog << "sfjjsf" << a;
+    std::cerr << endl
+              << "sff" << a << endl;
+    test_init();
+
+    vector<int> s{1, 2, 3, 4, 5};
+    for (auto iter : s)
+    {
+        //s.push_back(2);
+        //cout << iter;
+    }
+    cout << endl;
+    for (vector<int>::iterator iter = s.begin(); iter != s.end(); iter++)
+    {
+        //cout << *iter << " " << *iter;
+    }
+
+    const int raw = 0;
+    const int *pointer = &raw;
+
+    const int nwe = 3;
+    pointer = &nwe;
+
+    const int *const iter = &raw;
+    //*iter = 3;
+
+    int test = 1;
+    int fun = 2;
+    int *const wuming = &test;
+
+    // wuming = &fun;
+    *wuming = 3;
+    //
 }

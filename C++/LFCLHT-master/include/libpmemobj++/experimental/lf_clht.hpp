@@ -111,7 +111,7 @@ namespace pmem
             public:
                 using key_type = Key;
                 using mapped_type = T;
-                using value_type = std::pair<const Key, T>;
+                using value_type = std::pair<const Key, T>; // key and value core
                 using size_type = size_t;
                 using difference_type = ptrdiff_t;
                 using pointer = value_type *;
@@ -123,7 +123,7 @@ namespace pmem
                 using key_equal =
                     typename internal::key_equal_type<Hash, KeyEqual>::type;
                 using atomic_backoff = internal::atomic_backoff; //功能类似于memory_pause()
-
+                //core
                 struct bucket_s;
                 struct clht_hashtable_s;
                 struct ht_ts; //感觉没有用起来，ts代表什么
@@ -206,10 +206,11 @@ namespace pmem
                             size_t version;
                             uint8_t next_cache_line[CACHE_LINE_SIZE -
                                                     (3 * sizeof(size_t)) - (sizeof(clht_table_t))];
+                            //core
                             clht_hashtable_ptr_t table_tmp;
                             clht_hashtable_ptr_t table_prev;
                             clht_hashtable_ptr_t table_new;
-                            volatile uint32_t num_expands; // why volatile? 
+                            volatile uint32_t num_expands; // why volatile?
                             union
                             {
                                 volatile uint32_t num_expands_threshold;
@@ -334,9 +335,9 @@ namespace pmem
                 }
 
                 /**
-	 * Get the persistent memory pool where hashmap resides.
-	 * @returns pmem::obj::pool_base object.
-	 */
+	            * Get the persistent memory pool where hashmap resides.
+	            * @returns pmem::obj::pool_base object.
+	            */
                 pool_base
                 get_pool_base()
                 {
