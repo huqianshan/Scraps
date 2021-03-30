@@ -1,4 +1,5 @@
 # %%
+from matplotlib.patches import Rectangle
 import matplotlib.cm as cm
 import pandas as pd
 import seaborn as sns
@@ -143,7 +144,12 @@ with sns.axes_style("white"):
 
 # %%
 
+# https://stackoverflow.com/questions/22787209/how-to-have-clusters-of-stacked-bars-with-python-pandas
 
+# https://github.com/jimioke/groupstackbar
+# https://gist.github.com/ctokheim/6435202a1a880cfecd71
+
+#https://matplotlib.org/devdocs/gallery/shapes_and_collections/hatch_style_reference.html
 def plot_clustered_stacked(dfall, labels=None, title="multiple stacked bar plot",  H="/", **kwargs):
     """Given a list of dataframes, with identical columns and index, create a clustered stacked bar plot. 
 labels is a list of the names of the dataframe, used for the legend
@@ -154,7 +160,7 @@ H is the hatch used for identification of the different dataframe"""
     n_col = len(dfall[0].columns)-1
     n_ind = len(dfall[0].index)
     plt.rcParams['font.family'] = 'sans-serif'
-    plt.rcParams['font.sans-serif'] = 'NSimSun,Times New Roman'
+    plt.rcParams['font.sans-serif'] = 'SimSun,Times New Roman'
     plt.figure(figsize=(32, 18))
     axe = plt.subplot(111)
 
@@ -239,4 +245,37 @@ axe = plot_clustered_stacked([df1, df2, df3], [
                              "WriteBack pattern", "Hades", "Hades Plus"])
 
 
+# %%
+# https://matplotlib.org/devdocs/gallery/shapes_and_collections/hatch_style_reference.html
+
+
+fig, axs = plt.subplots(2, 5, constrained_layout=True, figsize=(6.4, 3.2))
+
+hatches = ['/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
+
+
+def hatches_plot(ax, h):
+    ax.add_patch(Rectangle((0, 0), 2, 2, fill=False, hatch=h))
+    ax.text(1, -0.5, f"' {h} '", size=15, ha="center")
+    ax.axis('equal')
+    ax.axis('off')
+
+
+for ax, h in zip(axs.flat, hatches):
+    hatches_plot(ax, h)
+
+
+fig, axs = plt.subplots(2, 5, constrained_layout=True, figsize=(6.4, 3.2))
+
+hatches = ['//', '\\\\', '||', '--', '++', 'xx', 'oo', 'OO', '..', '**']
+
+for ax, h in zip(axs.flat, hatches):
+    hatches_plot(ax, h)
+
+fig, axs = plt.subplots(2, 5, constrained_layout=True, figsize=(6.4, 3.2))
+
+hatches = ['/o', '\\|', '|*', '-\\', '+o', 'x*', 'o-', 'O|', 'O.', '*-']
+
+for ax, h in zip(axs.flat, hatches):
+    hatches_plot(ax, h)
 # %%
