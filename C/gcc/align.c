@@ -4,11 +4,12 @@
  * execute: ./a.out
  */
 #include <stdio.h>
+#include <stdlib.h>
 
 // size is 8, 4 + 1, then round to multiple of 4 (int's size),
 struct stu_a
 {
-    int i;                    
+    int i;
     char c;
 };
 
@@ -143,14 +144,19 @@ void test_type_size(void)
 
 void test_malloc_address()
 {
-    char *a = malloc(100);
-    printf("malloc %p void \n", a);
+    for (int i = 0; i < 100; i++)
+    {
+        char *a = malloc(i * 3);
+        printf("malloc %p void \n", a);
+        free(a);
+    }
 }
+
 int main(int argc, char *argv[])
 {
-    test_type_size();
+    /*     test_type_size();
     test_struct_padding();
-    test_struct_address();
+    test_struct_address(); */
     test_malloc_address();
 
     return 0;

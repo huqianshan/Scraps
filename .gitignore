@@ -56,3 +56,8 @@ build/*
 bin/*
 **/.vscode/*
 
+# binariy file
+**/benchmarking
+**/eval_clocks
+**/using_tsc
+

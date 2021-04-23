@@ -3,6 +3,9 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <cassert>
+#include <atomic>
+#include <string>
 
 using namespace std;
 
@@ -27,6 +30,29 @@ int popcount(uint64_t n)
 #else
 #error "other POPCNT implementations go here"
 #endif
+}
+
+// bool __sync_val_compare_and_swap (type *ptr, type oldval, type newval)
+/*
+These builtins perform an atomic compare and swap. That is, if the current
+value of *ptr is oldval, then write newval into *ptr. The “bool” version
+returns true if the comparison is successful and newval was written.
+
+NOTE: oldval will NOT be updated if the atomic operation fails.
+*/
+/* #define CAS(ptr, oldval, newval) \
+    (__sync_val_compare_and_swap(ptr, oldval, newval)) */
+
+//test-and-set uint8_t
+// set *addr to 0xFF and return the old value in addr
+static inline uint8_t tas_uint8(volatile uint8_t *addr)
+{
+    uint8_t oldval;
+    __asm__ __volatile__("xchgb %0,%1"
+                         : "=q"(oldval), "=m"(*addr)
+                         : "0"((unsigned char)0xff), "m"(*addr)
+                         : "memory");
+    return (uint8_t)oldval;
 }
 
 typedef struct thread_input
@@ -136,9 +162,55 @@ typedef struct thread_resize
     }
 } thread_resize;
 
+// for atomic operations
+int x = 0;
+int y = 0;
+void t1()
+{
+    y = 20;
+    x = 10;
+}
+
+void t2()
+{
+
+    if (x == 10)
+    {
+        assert(y == 20);
+    }
+}
+
+std::atomic<int> cnt = {0};
+
+void f()
+{
+    for (int n = 0; n < 1000; ++n)
+    {
+        cnt.fetch_add(1, std::memory_order_relaxed);
+    }
+}
+
+std::atomic<std::string *> ptr;
+int data;
+
+void producer()
+{
+    std::string *p = new std::string("Hello");
+    data = 42;
+    ptr.store(p, std::memory_order_release);
+}
+
+void consumer()
+{
+    std::string *p2;
+    while (!(p2 = ptr.load(std::memory_order_acquire)))
+        ;
+    assert(*p2 == "Hell1o"); // never fires
+    assert(data == 42);      // never fires
+}
 int main(int argc, char **argv)
 {
-    int buckets = 2;
+    /*     int buckets = 2;
     int thread_num = 2;
 
     thread_resize *td = new thread_resize(buckets, thread_num);
@@ -155,5 +227,32 @@ int main(int argc, char **argv)
     cout << td->flag << endl
          << popcount(td->flag) << endl;
 
-    delete td;
+    delete td; */
+
+    /*     while (true)
+    {
+        thread tid_a(t1);
+        thread tid_b(t2);
+        cout << tid_a.get_id() << endl;
+        cout << tid_b.get_id() << endl;
+        y = 1;
+        x = 9;
+        tid_a.join();
+        tid_b.join();
+
+    } */
+    /*     std::vector<std::thread> v;
+    for (int n = 0; n < 10; ++n)
+    {
+        v.emplace_back(f);
+    }
+    for (auto &t : v)
+    {
+        t.join();
+    }
+    std::cout << "Final counter value is " << cnt << '\n'; */
+    std::thread t1(producer);
+    std::thread t2(consumer);
+    t1.join();
+    t2.join();
 }

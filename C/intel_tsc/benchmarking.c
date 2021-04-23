@@ -98,7 +98,8 @@ void bench_syscall(void)
   t0 = bench_start();
   for (i = 0; i < N; i++)
   {
-    syscall(SYS_getpid);
+    // syscall(SYS_getpid);
+    __builtin_ia32_pause();
   }
   t1 = bench_end();
 
@@ -167,12 +168,12 @@ int main(void)
   clk_overhead = clock_overhead(CLOCK);
 
   bench_tsc_clock(5);
-  bench_tsc_clock(10);
-  bench_tsc_clock(25);
+  // bench_tsc_clock(10);
+  // bench_tsc_clock(25);
 
   printf("=> Bench code\n");
   bench_syscall();
-  bench_fib();
+  // bench_fib();
 
   bench_sleep();
 
