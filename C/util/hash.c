@@ -168,7 +168,9 @@ int main()
     //     printf("%p:%lu %lu %lu\n", ptr, (uint64_t)(ptr), TO64(ptr), *(uint64_t *)ptr);
     // }
     buf[0] = 1;
-    char *ptr = buf;
+    char *ptr = 1;
     TO64(ptr);
     *(uint64_t *)ptr;
+    // int c = buf[0] / (1 - 1);
+    printf("%d\n", *(int *)ptr);
 }
