@@ -1,5 +1,16 @@
-#include <stdio.h>
+#include <immintrin.h>
 #include <stdint.h>
+#include <stdio.h>
+
+#define SIMD 1
+#define SIMD_CMP8(src, key)                                      \
+    do                                                           \
+    {                                                            \
+        const __m256i key_data = _mm256_set1_epi8(key);          \
+        __m256i seg_data = _mm256_loadu_si256((__m256i *)(src)); \
+        __m256i rv_mask = _mm256_cmpeq_epi8(seg_data, key_data); \
+        mask = _mm256_movemask_epi8(rv_mask);                    \
+    } while (0)
 
 /*
 — Built-in Function: int __builtin_ffs (unsigned int x)
