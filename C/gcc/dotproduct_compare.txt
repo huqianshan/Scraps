@@ -1,0 +1,108 @@
+number = 256.
+ 2.00 kB 
+dot(x1, x2, number)                                         	:  10.445 cycles per operation (best)  0.766 bytes per cycle (best) 	10.494 cycles per operation (avg) 
+dot128(x1, x2, number)                                      	:  2.844 cycles per operation (best)  2.813 bytes per cycle (best) 	2.874 cycles per operation (avg) 
+dot128dt(x1, x2, number)                                    	:  4.133 cycles per operation (best)  1.936 bytes per cycle (best) 	4.230 cycles per operation (avg) 
+dot256(x1, x2, number)                                      	:  1.727 cycles per operation (best)  4.633 bytes per cycle (best) 	1.778 cycles per operation (avg) 
+dot128fma(x1, x2, number)                                   	:  2.797 cycles per operation (best)  2.860 bytes per cycle (best) 	2.830 cycles per operation (avg) 
+dot256fma(x1, x2, number)                                   	:  1.898 cycles per operation (best)  4.214 bytes per cycle (best) 	1.943 cycles per operation (avg) 
+dot512(x1, x2, number)                                      	:  1.523 cycles per operation (best)  5.251 bytes per cycle (best) 	1.570 cycles per operation (avg) 
+dot512fma(x1, x2, number)                                   	:  1.453 cycles per operation (best)  5.505 bytes per cycle (best) 	1.483 cycles per operation (avg) 
+dot512fma2(x1, x2, number)                                  	:  1.406 cycles per operation (best)  5.689 bytes per cycle (best) 	1.494 cycles per operation (avg) 
+
+number = 512.
+ 4.00 kB 
+dot(x1, x2, number)                                         	:  10.543 cycles per operation (best)  0.759 bytes per cycle (best) 	10.554 cycles per operation (avg) 
+dot128(x1, x2, number)                                      	:  2.742 cycles per operation (best)  2.917 bytes per cycle (best) 	3.254 cycles per operation (avg) 
+dot128dt(x1, x2, number)                                    	:  4.031 cycles per operation (best)  1.984 bytes per cycle (best) 	4.431 cycles per operation (avg) 
+dot256(x1, x2, number)                                      	:  1.852 cycles per operation (best)  4.321 bytes per cycle (best) 	2.107 cycles per operation (avg) 
+dot128fma(x1, x2, number)                                   	:  3.367 cycles per operation (best)  2.376 bytes per cycle (best) 	3.380 cycles per operation (avg) 
+dot256fma(x1, x2, number)                                   	:  1.820 cycles per operation (best)  4.395 bytes per cycle (best) 	1.854 cycles per operation (avg) 
+dot512(x1, x2, number)                                      	:  1.082 cycles per operation (best)  7.394 bytes per cycle (best) 	1.095 cycles per operation (avg) 
+dot512fma(x1, x2, number)                                   	:  1.062 cycles per operation (best)  7.529 bytes per cycle (best) 	1.076 cycles per operation (avg) 
+dot512fma2(x1, x2, number)                                  	:  1.051 cycles per operation (best)  7.613 bytes per cycle (best) 	1.068 cycles per operation (avg) 
+
+number = 1024.
+ 8.00 kB 
+dot(x1, x2, number)                                         	:  10.412 cycles per operation (best)  0.768 bytes per cycle (best) 	10.418 cycles per operation (avg) 
+dot128(x1, x2, number)                                      	:  2.658 cycles per operation (best)  3.010 bytes per cycle (best) 	2.668 cycles per operation (avg) 
+dot128dt(x1, x2, number)                                    	:  3.963 cycles per operation (best)  2.019 bytes per cycle (best) 	4.356 cycles per operation (avg) 
+dot256(x1, x2, number)                                      	:  1.406 cycles per operation (best)  5.689 bytes per cycle (best) 	1.425 cycles per operation (avg) 
+dot128fma(x1, x2, number)                                   	:  2.650 cycles per operation (best)  3.018 bytes per cycle (best) 	2.656 cycles per operation (avg) 
+dot256fma(x1, x2, number)                                   	:  1.559 cycles per operation (best)  5.133 bytes per cycle (best) 	1.571 cycles per operation (avg) 
+dot512(x1, x2, number)                                      	:  0.846 cycles per operation (best)  9.460 bytes per cycle (best) 	0.857 cycles per operation (avg) 
+dot512fma(x1, x2, number)                                   	:  0.838 cycles per operation (best)  9.548 bytes per cycle (best) 	0.845 cycles per operation (avg) 
+dot512fma2(x1, x2, number)                                  	:  0.846 cycles per operation (best)  9.460 bytes per cycle (best) 	0.878 cycles per operation (avg) 
+
+number = 2097152.
+ 16.00 MB 
+dot(x1, x2, number)                                         	:  3.718 cycles per operation (best)  2.152 bytes per cycle (best) 	3.755 cycles per operation (avg) 
+dot128(x1, x2, number)                                      	:  1.091 cycles per operation (best)  7.330 bytes per cycle (best) 	1.112 cycles per operation (avg) 
+dot128dt(x1, x2, number)                                    	:  1.617 cycles per operation (best)  4.949 bytes per cycle (best) 	1.640 cycles per operation (avg) 
+dot256(x1, x2, number)                                      	:  0.916 cycles per operation (best)  8.731 bytes per cycle (best) 	0.931 cycles per operation (avg) 
+dot128fma(x1, x2, number)                                   	:  1.004 cycles per operation (best)  7.969 bytes per cycle (best) 	1.017 cycles per operation (avg) 
+dot256fma(x1, x2, number)                                   	:  0.877 cycles per operation (best)  9.117 bytes per cycle (best) 	0.893 cycles per operation (avg) 
+dot512(x1, x2, number)                                      	:  0.869 cycles per operation (best)  9.205 bytes per cycle (best) 	0.880 cycles per operation (avg) 
+dot512fma(x1, x2, number)                                   	:  0.836 cycles per operation (best)  9.565 bytes per cycle (best) 	0.843 cycles per operation (avg) 
+dot512fma2(x1, x2, number)                                  	:  0.835 cycles per operation (best)  9.580 bytes per cycle (best) 	0.844 cycles per operation (avg) 
+
+number = 4194304.
+ 32.00 MB 
+dot(x1, x2, number)                                         	:  3.737 cycles per operation (best)  2.141 bytes per cycle (best) 	3.772 cycles per operation (avg) 
+dot128(x1, x2, number)                                      	:  1.282 cycles per operation (best)  6.239 bytes per cycle (best) 	1.304 cycles per operation (avg) 
+dot128dt(x1, x2, number)                                    	:  1.821 cycles per operation (best)  4.394 bytes per cycle (best) 	1.853 cycles per operation (avg) 
+dot256(x1, x2, number)                                      	:  1.208 cycles per operation (best)  6.622 bytes per cycle (best) 	1.227 cycles per operation (avg) 
+dot128fma(x1, x2, number)                                   	:  1.245 cycles per operation (best)  6.427 bytes per cycle (best) 	1.257 cycles per operation (avg) 
+dot256fma(x1, x2, number)                                   	:  1.162 cycles per operation (best)  6.886 bytes per cycle (best) 	1.180 cycles per operation (avg) 
+dot512(x1, x2, number)                                      	:  1.059 cycles per operation (best)  7.558 bytes per cycle (best) 	1.073 cycles per operation (avg) 
+dot512fma(x1, x2, number)                                   	:  1.005 cycles per operation (best)  7.963 bytes per cycle (best) 	1.020 cycles per operation (avg) 
+dot512fma2(x1, x2, number)                                  	:  1.006 cycles per operation (best)  7.953 bytes per cycle (best) 	1.022 cycles per operation (avg) 
+
+number = 8388608.
+ 64.00 MB 
+dot(x1, x2, number)                                         	:  3.734 cycles per operation (best)  2.142 bytes per cycle (best) 	4.049 cycles per operation (avg) 
+dot128(x1, x2, number)                                      	:  2.451 cycles per operation (best)  3.264 bytes per cycle (best) 	2.460 cycles per operation (avg) 
+dot128dt(x1, x2, number)                                    	:  2.490 cycles per operation (best)  3.213 bytes per cycle (best) 	2.495 cycles per operation (avg) 
+dot256(x1, x2, number)                                      	:  2.451 cycles per operation (best)  3.264 bytes per cycle (best) 	2.457 cycles per operation (avg) 
+dot128fma(x1, x2, number)                                   	:  2.412 cycles per operation (best)  3.317 bytes per cycle (best) 	2.425 cycles per operation (avg) 
+dot256fma(x1, x2, number)                                   	:  2.418 cycles per operation (best)  3.308 bytes per cycle (best) 	2.513 cycles per operation (avg) 
+dot512(x1, x2, number)                                      	:  2.288 cycles per operation (best)  3.496 bytes per cycle (best) 	2.295 cycles per operation (avg) 
+dot512fma(x1, x2, number)                                   	:  2.255 cycles per operation (best)  3.548 bytes per cycle (best) 	2.287 cycles per operation (avg) 
+dot512fma2(x1, x2, number)                                  	:  2.264 cycles per operation (best)  3.533 bytes per cycle (best) 	2.269 cycles per operation (avg) 
+
+number = 16777216.
+ 128.00 MB 
+dot(x1, x2, number)                                         	:  3.850 cycles per operation (best)  2.078 bytes per cycle (best) 	3.959 cycles per operation (avg) 
+dot128(x1, x2, number)                                      	:  2.477 cycles per operation (best)  3.230 bytes per cycle (best) 	2.479 cycles per operation (avg) 
+dot128dt(x1, x2, number)                                    	:  2.004 cycles per operation (best)  3.991 bytes per cycle (best) 	2.256 cycles per operation (avg) 
+dot256(x1, x2, number)                                      	:  1.655 cycles per operation (best)  4.833 bytes per cycle (best) 	1.658 cycles per operation (avg) 
+dot128fma(x1, x2, number)                                   	:  1.592 cycles per operation (best)  5.024 bytes per cycle (best) 	1.598 cycles per operation (avg) 
+dot256fma(x1, x2, number)                                   	:  1.592 cycles per operation (best)  5.026 bytes per cycle (best) 	1.600 cycles per operation (avg) 
+dot512(x1, x2, number)                                      	:  1.496 cycles per operation (best)  5.347 bytes per cycle (best) 	1.500 cycles per operation (avg) 
+dot512fma(x1, x2, number)                                   	:  1.456 cycles per operation (best)  5.496 bytes per cycle (best) 	1.459 cycles per operation (avg) 
+dot512fma2(x1, x2, number)                                  	:  1.459 cycles per operation (best)  5.485 bytes per cycle (best) 	1.462 cycles per operation (avg) 
+
+number = 33554432.
+ 256.00 MB 
+dot(x1, x2, number)                                         	:  3.740 cycles per operation (best)  2.139 bytes per cycle (best) 	3.816 cycles per operation (avg) 
+dot128(x1, x2, number)                                      	:  1.571 cycles per operation (best)  5.094 bytes per cycle (best) 	1.583 cycles per operation (avg) 
+dot128dt(x1, x2, number)                                    	:  1.986 cycles per operation (best)  4.029 bytes per cycle (best) 	2.001 cycles per operation (avg) 
+dot256(x1, x2, number)                                      	:  1.516 cycles per operation (best)  5.278 bytes per cycle (best) 	1.522 cycles per operation (avg) 
+dot128fma(x1, x2, number)                                   	:  1.467 cycles per operation (best)  5.452 bytes per cycle (best) 	1.478 cycles per operation (avg) 
+dot256fma(x1, x2, number)                                   	:  1.447 cycles per operation (best)  5.529 bytes per cycle (best) 	1.451 cycles per operation (avg) 
+dot512(x1, x2, number)                                      	:  1.364 cycles per operation (best)  5.866 bytes per cycle (best) 	1.366 cycles per operation (avg) 
+dot512fma(x1, x2, number)                                   	:  1.312 cycles per operation (best)  6.096 bytes per cycle (best) 	1.328 cycles per operation (avg) 
+dot512fma2(x1, x2, number)                                  	:  1.319 cycles per operation (best)  6.065 bytes per cycle (best) 	1.322 cycles per operation (avg) 
+
+number = 134217728.
+ 1024.00 MB 
+dot(x1, x2, number)                                         	:  3.779 cycles per operation (best)  2.117 bytes per cycle (best) 	3.812 cycles per operation (avg) 
+dot128(x1, x2, number)                                      	:  1.625 cycles per operation (best)  4.922 bytes per cycle (best) 	1.630 cycles per operation (avg) 
+dot128dt(x1, x2, number)                                    	:  2.015 cycles per operation (best)  3.970 bytes per cycle (best) 	2.037 cycles per operation (avg) 
+dot256(x1, x2, number)                                      	:  1.569 cycles per operation (best)  5.098 bytes per cycle (best) 	1.600 cycles per operation (avg) 
+dot128fma(x1, x2, number)                                   	:  1.528 cycles per operation (best)  5.236 bytes per cycle (best) 	1.532 cycles per operation (avg) 
+dot256fma(x1, x2, number)                                   	:  1.509 cycles per operation (best)  5.303 bytes per cycle (best) 	1.513 cycles per operation (avg) 
+dot512(x1, x2, number)                                      	:  1.423 cycles per operation (best)  5.623 bytes per cycle (best) 	1.428 cycles per operation (avg) 
+dot512fma(x1, x2, number)                                   	:  1.383 cycles per operation (best)  5.787 bytes per cycle (best) 	1.387 cycles per operation (avg) 
+dot512fma2(x1, x2, number)                                  	:  1.389 cycles per operation (best)  5.761 bytes per cycle (best) 	1.397 cycles per operation (avg) 
+
