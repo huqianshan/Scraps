@@ -5,7 +5,7 @@ SET(CMAKE_C_FLAGS_DEBUG "$ENV{CFLAGS} -O0 -Wall -g2 -ggdb3")
 SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CFLAGS} -O0 -Werror -Wreturn-type -g2 -ggdb3 -std=c++17 -Wfatal-errors -Wno-deprecated -ftemplate-depth-128")
 SET(CMAKE_C_FLAGS_RELEASE "$ENV{CFLAGS} -Ofast -Wall")
 
-set (EXTRA_LIBS ${EXTRA_LIBS} pthread pmem pmemobj pmemcto)
+set (EXTRA_LIBS ${EXTRA_LIBS} pthread )#pmem pmemobj pmemcto)
 file(GLOB_RECURSE tests RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/C/*/*.c")
 foreach(mainfile IN LISTS tests)
     # Get file name without directory
