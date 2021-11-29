@@ -9,6 +9,17 @@
 #include "benchmark.h"
 
 #include <x86intrin.h>
+
+#define SIMD 1
+#define SIMD_CMP8(src, key)                                      \
+    do                                                           \
+    {                                                            \
+        const __m256i key_data = _mm256_set1_epi8(key);          \
+        __m256i seg_data = _mm256_loadu_si256((__m256i *)(src)); \
+        __m256i rv_mask = _mm256_cmpeq_epi8(seg_data, key_data); \
+        mask = _mm256_movemask_epi8(rv_mask);                    \
+    } while (0)
+
 __attribute__((noinline)) float dot(float *x1, float *x2, size_t len)
 {
     float sum = 0;

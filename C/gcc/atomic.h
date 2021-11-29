@@ -27,6 +27,15 @@ Enforces total ordering with all other __ATOMIC_SEQ_CST operations.
 
 // FAA:fetch and add
 #define FAA(ptr, val) __atomic_fetch_add(ptr, val, __ATOMIC_ACQ_REL)
+#define AAF(ptr, val) __atomic_add_fetch(ptr, val, __ATOMIC_ACQ_REL)
+
+#define PREFETCH(x) __builtin_prefetch(x)
+#define LIKELY(x) __builtin_expect(!!(x), 1)
+#define UNLIKELY(x) __builtin_expect(!!(x), 0)
+
+#define CACHELINESIZE (64)
+#define ____CACHELINE_ALIGNED __attribute__((aligned(CACHELINESIZE)))
+/*
 
 /*
  * 如果*p==*u的话 *p=v
@@ -46,3 +55,79 @@ Enforces total ordering with all other __ATOMIC_SEQ_CST operations.
 #define CAS(_p, _u, _v)                                              \
     (__atomic_compare_exchange_n(_p, _u, _v, TRUE, __ATOMIC_ACQ_REL, \
                                  __ATOMIC_RELAXED))
+
+/**
+ * 获取lock（加锁）
+ * @param bucket 要加锁的bucket
+ * @param index 桶的索引位置
+ */
+inline void get_lock(int *flag)
+{
+    uint64_t old_value = 0;
+    uint64_t new_value = 0;
+    do
+    {
+        while (1)
+        {
+            old_value = ATOMIC_LOAD(flag);
+            if (!old_value)
+            { // 0代表获得锁，跳出获取loop循环
+                break;
+            }
+        }
+        new_value = 1;
+    } while (!CAS(flag, &old_value, new_value));
+}
+
+/**
+ * 释放锁 （本函数不检测是否已经成功对bucket加锁）
+ * @param bucket
+ * @required bucket已经加锁
+ */
+inline void release_lock(int *flag)
+{
+    ATOMIC_STORE(flag, 0);
+    // printf("flag: *p %p: %d\n", flag, *flag);
+}
+/* 
+struct cas_spin_lock
+{
+    uint64_t *lock;
+
+    cas_spin_lock() = delete;
+    cas_spin_lock(cas_spin_lock &other) = delete;
+    cas_spin_lock(cas_spin_lock &&other) = delete;
+
+    cas_spin_lock(uint64_t *lk)
+    {
+        lock = lk;
+        get_lock(lock);
+    }
+
+    ~cas_spin_lock()
+    {
+        release_lock(lock);
+    }
+};
+ */
+struct cas_spin_lock
+{
+    int &lock;
+
+    cas_spin_lock() = delete;
+    cas_spin_lock(cas_spin_lock &other) = delete;
+    cas_spin_lock(cas_spin_lock &&other) = delete;
+
+    cas_spin_lock(int &lk) : lock(lk)
+    {
+        // lock = lk;
+        get_lock(&lock);
+    }
+
+    ~cas_spin_lock()
+    {
+        release_lock(&lock);
+    }
+};
+
+

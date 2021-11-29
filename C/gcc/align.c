@@ -3,6 +3,7 @@
  * compile: gcc memory_align.c
  * execute: ./a.out
  */
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -64,6 +65,13 @@ struct stu_h
     long l;
 };
 
+struct bk_entry
+{
+
+    uint64_t offset; // 从开始地址的float 偏移量，
+    int id;
+};
+
 // test - padding within a single struct,
 int test_struct_padding()
 {
@@ -76,6 +84,8 @@ int test_struct_padding()
 
     printf("%s: %ld\n", "stu_g", sizeof(struct stu_g));
     printf("%s: %ld\n", "stu_h", sizeof(struct stu_h));
+
+    printf("%s: %ld\n", "stu_i", sizeof(struct bk_entry));
 
     return 0;
 }
@@ -152,12 +162,24 @@ void test_malloc_address()
     }
 }
 
-int main(int argc, char *argv[])
+struct ht_entry
 {
-    /*     test_type_size();
-    test_struct_padding();
-    test_struct_address(); */
-    test_malloc_address();
 
+    std::vector<stu_h> info;  // 16 bytes
+    std::vector<bk_entry> bk; // 12 bytes{
+    ht_entry
+    {
+    }
+}
+
+int
+main(int argc, char *argv[])
+{
+    // test_type_size();
+    test_struct_padding();
+    // test_struct_address();
+    // test_malloc_address();
+
+    std::cout << sizeof(ht_entry) << std::endl;
     return 0;
 }

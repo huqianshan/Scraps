@@ -11,6 +11,11 @@ public:
         p = new int[i];
         std::cout << "Node Constructor" << std::endl;
     }
+    Node()
+    {
+        // p = new int[i];
+        std::cout << "Node Constructor" << std::endl;
+    }
     Node(const Node &other) : i(other.i + 1)
     {
         // memcpy(p, other.p, sizeof(int)*i);
@@ -30,12 +35,12 @@ public:
 int main(int argc, char *argv[])
 {
     {
-        Node n(1);
+        Node n[3];
     }
 
     // void *;
 
     std::vector<Node> nodelist;
     nodelist.push_back(Node(1));
-    // std::cout << nodelist.size() << std::endl;
+    std::cout << nodelist.size() << std::endl;
 }

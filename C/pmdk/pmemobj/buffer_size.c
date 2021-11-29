@@ -1,6 +1,7 @@
 
 #include <inttypes.h>
 #include <libpmem.h>
+#include <libpmemcto.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
