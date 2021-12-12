@@ -61,3 +61,7 @@ bin/*
 **/eval_clocks
 **/using_tsc
 
+## binary file
+normal
+a.out
+

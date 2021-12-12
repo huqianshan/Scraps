@@ -16,7 +16,7 @@ foreach(mainfile IN LISTS tests)
 endforeach()
 
 
-set (EXTRA_LIBS ${EXTRA_LIBS} pthread)
+set (EXTRA_LIBS ${EXTRA_LIBS} pthread gtest_main gtest)
 file(GLOB_RECURSE tests RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/C++/*/*.cpp")
 foreach(mainfile IN LISTS tests)
     # Get file name without directory
