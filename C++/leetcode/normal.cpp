@@ -11,6 +11,193 @@
 
 using namespace std;
 
+template <typename T>
+void print_vector(vector<T> nums)
+{
+    cout << "[";
+    for (auto i : nums)
+    {
+        cout << i << ",";
+    }
+    cout << "]" << endl;
+}
+
+/* 
+1. 两数之和
+给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出 和为目标值 target  的那 两个 整数，并返回它们的数组下标。
+
+你可以假设每种输入只会对应一个答案。但是，数组中同一个元素在答案里不能重复出现。
+
+你可以按任意顺序返回答案
+ */
+vector<int> twoSum(vector<int> &nums, int target)
+{
+    vector<int> ans(2);
+    int len = nums.size();
+    for (int i = 0; i < len - 1; i++)
+    {
+        for (int j = i + 1; j < len; j++)
+        {
+            if (nums[i] + nums[j] == target)
+            {
+                ans[0] = i;
+                ans[1] = j;
+            }
+        }
+    }
+    return ans;
+}
+vector<int> twoSum2(vector<int> &nums, int target)
+{
+    unordered_map<int, int> hashtable;
+    for (int i = 0; i < nums.size(); ++i)
+    {
+        auto it = hashtable.find(target - nums[i]);
+        if (it != hashtable.end())
+        {
+            return {it->second, i}; // 还能这么构造？
+        }
+        hashtable[nums[i]] = i;
+    }
+    return {};
+}
+
+/* 
+283. 移动零
+给定一个数组 nums，编写一个函数将所有 0 移动到数组的末尾，同时保持非零元素的相对顺序
+ */
+void moveZeroes(vector<int> &nums)
+{
+    int cnt = 0;
+    for (auto it = nums.begin(); it != nums.end();)
+    {
+        if (*it == 0)
+        {
+            it = nums.erase(it);
+            cnt++;
+        }
+        else
+        {
+            ++it;
+        }
+    }
+
+    for (int i = 0; i < cnt; i++)
+    {
+        nums.push_back(0);
+    }
+}
+
+/* 
+双指针
+ */
+void moveZeroes_2(vector<int> &nums)
+{
+    int left = 0;
+    int right = 0;
+    int len = nums.size();
+
+    while (right < len)
+    {
+        if (nums[right])
+        {
+            swap(nums[left], nums[right]);
+            left++;
+        }
+        right++;
+    }
+}
+
+/* 
+448. 找到所有数组中消失的数字
+给你一个含 n 个整数的数组 nums ，其中 nums[i] 在区间 [1, n] 内。请你找出所有在 [1, n] 范围内但没有出现在 nums 中的数字，并以数组的形式返回结果。
+ */
+vector<int> findDisappearedNumbers(vector<int> &nums)
+{
+    int len = nums.size();
+    vector<int> ans;
+
+    for (int i = 0; i < len; i++)
+    {
+        while (nums[i] != nums[nums[i] - 1])
+        {
+            swap(nums[i], nums[nums[i] - 1]);
+        }
+    }
+    for (int i = 0; i < len; i++)
+    {
+        if (nums[i] != (i + 1))
+        {
+            ans.push_back(i + 1);
+        }
+    }
+    return ans;
+}
+/* 
+442. 数组中重复的数据
+给定一个整数数组 a，其中1 ≤ a[i] ≤ n （n为数组长度）, 其中有些元素出现两次而其他元素出现一次。
+
+找到所有出现两次的元素。
+
+你可以不用到任何额外空间并在O(n)时间复杂度内解决这个问题吗？
+ */
+vector<int> findDuplicates(vector<int> &nums)
+{
+    vector<int> ans;
+    int len = nums.size();
+    for (auto i : nums)
+    {
+        nums[(i - 1) % len] += len;
+    }
+
+    for (int i = 0; i < len; i++)
+    {
+        if (nums[i] > (2 * len))
+        {
+            ans.push_back(i % (2 * len) + 1);
+        }
+    }
+    return ans;
+}
+
+/* 
+461. 汉明距离
+两个整数之间的 汉明距离 指的是这两个数字对应二进制位不同的位置的数目。
+
+给你两个整数 x 和 y，计算并返回它们之间的汉明距离。
+ */
+int hammingDistance(int x, int y)
+{
+    return __builtin_popcount(x^y);
+}
+
+void test_findDisappearedNumbers_448()
+{
+    vector<int> s{4, 3, 2, 7, 8, 2, 3, 1};
+    // s = {1, 1};
+    // s = {1, 1, 1, 2};
+    // cout << findDisappearedNumbers(s) << endl;
+    auto ret = findDuplicates(s);
+    print_vector(s);
+    print_vector(ret);
+}
+/* 
+709. 转换成小写字母
+给你一个字符串 s ，将该字符串中的大写字母转换成相同的小写字母，返回新的字符串。
+ */
+string
+toLowerCase(string s)
+{
+    for (auto &i : s)
+    {
+        if (i <= 'Z' && i >= 'A')
+        {
+            i += 32;
+        }
+    }
+    return s;
+}
+
 /**
  * https://leetcode-cn.com/problems/diao-zheng-shu-zu-shun-xu-shi-qi-shu-wei-yu-ou-shu-qian-mian-lcof/
  * 输入一个整数数组，实现一个函数来调整该数组中数字的顺序，使得所有奇数位于数组的前半部分，所有偶数位于数组的后半部分。
@@ -78,17 +265,6 @@ vector<int> intersection(vector<int> &nums1, vector<int> &nums2)
         }
     }
     return ans;
-}
-
-template <typename T>
-void print_vector(vector<T> nums)
-{
-    cout << "[";
-    for (auto i : nums)
-    {
-        cout << i << ",";
-    }
-    cout << "]" << endl;
 }
 
 /*
@@ -405,6 +581,70 @@ string minWindow(string s, string t)
     return max_len == INT_MAX ? string() : s.substr(start, max_len);
 }
 
+/*
+242. 有效的字母异位词
+给定两个字符串 s 和 t ，编写一个函数来判断 t 是否是 s 的字母异位词。
+
+注意：若 s 和 t 中每个字符出现的次数都相同，则称 s 和 t 互为字母异位词
+*/
+bool isAnagram(string s, string t)
+{
+    unordered_map<char, int> occ;
+    for (auto c : t)
+    {
+        occ[c]++;
+    }
+}
+
+/* 
+438. 找到字符串中所有字母异位词
+给定两个字符串 s 和 p，找到 s 中所有 p 的 异位词 的子串，返回这些子串的起始索引。不考虑答案输出的顺序。
+
+异位词 指由相同字母重排列形成的字符串（包括相同的字符串）
+*/
+vector<int> findAnagrams(string s, string p)
+{
+    unordered_map<char, int> occ;
+    for (auto c : p)
+    {
+        occ[c]++;
+    }
+
+    int left = 0, right = 0;
+    vector<int> ans;
+    int slen = s.size();
+    int plen = p.size();
+    int window = 0;
+    int count = plen;
+    while (right < slen)
+    { // 1.扩大窗口
+        if (occ[s[right]] > 0)
+        {
+            count--;
+        }
+        occ[s[right]]--;
+
+        if (count == 0)
+        {
+            while (left < right && occ[s[left]] < 0)
+            { //2. 缩短滑动窗口
+                occ[s[left++]]++;
+            }
+            // 3. 更新答案
+            if ((right - left + 1) == plen)
+            {
+                ans.push_back(left);
+            }
+            // 4.去除一个答案
+            occ[s[left]]++;
+            left++;
+            count++;
+        }
+        right++;
+    }
+    return ans;
+}
+
 #define ABS(N) ((N < 0) ? (-N) : (N))
 /* 
 
@@ -468,12 +708,20 @@ string longestPalindrome(string s)
 
 void test_minWindow_76()
 {
-    string s = "ABCDE";
-    string t = "ACE";
-    cout << countSubstrings(t) << endl;
-    s = "ADOBECODEBANC";
-    t = "AAA";
-    cout << countSubstrings(t) << endl;
+    string s = "cbaebabacd";
+    string t = "abc";
+    // cout << countSubstrings(t) << endl;
+    print_vector(findAnagrams(s, t));
+    s = "abab";
+    t = "ab";
+    print_vector(findAnagrams(s, t));
+    s = "baa";
+    t = "aa";
+    print_vector(findAnagrams(s, t));
+    s = "abaacbabc";
+    t = "abc";
+    print_vector(findAnagrams(s, t));
+    // cout << countSubstrings(t) << endl;
 }
 /* 
 动态规划
@@ -618,7 +866,9 @@ void test_climStairs_70()
 int main()
 {
 
-    // test_minWindow_76();
+    test_minWindow_76();
     // test_climStairs_70();
-    cout << countSubstrings("baa") << endl;
+    // cout << toLowerCase("Abaa") << endl;
+    // printf("%d %d %d %d\n", 'a', 'z', 'A', 'Z');
+    // test_findDisappearedNumbers_448();
 }
