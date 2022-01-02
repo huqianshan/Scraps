@@ -7,8 +7,10 @@
 #include <iostream>
 #include <numeric>
 #include <queue>
+#include <stack>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 using namespace std;
@@ -23,6 +25,23 @@ struct TreeNode
     TreeNode() : val(0), left(nullptr), right(nullptr) {}
     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+};
+
+/* Definition for a multi tree node. */
+class Node
+{
+public:
+    int val;
+    Node *left;
+    Node *right;
+    Node *next;
+
+    Node() : val(0), left(NULL), right(NULL), next(NULL) {}
+
+    Node(int _val) : val(_val), left(NULL), right(NULL), next(NULL) {}
+
+    Node(int _val, Node *_left, Node *_right, Node *_next)
+        : val(_val), left(_left), right(_right), next(_next) {}
 };
 
 //  Definition for singly-linked list.
@@ -43,7 +62,7 @@ struct ListNode
     }
 };
 
-typedef struct ListNode Node;
+// typedef struct ListNode Node;
 
 void trimLeftTrailingSpaces(string &input)
 {
@@ -147,6 +166,34 @@ TreeNode *stringToTreeNode(string input)
     return root;
 }
 
+string treeNodeToString(TreeNode *root)
+{
+    if (root == nullptr)
+    {
+        return "[]";
+    }
+
+    string output = "";
+    queue<TreeNode *> q;
+    q.push(root);
+    while (!q.empty())
+    {
+        TreeNode *node = q.front();
+        q.pop();
+
+        if (node == nullptr)
+        {
+            output += "null, ";
+            continue;
+        }
+
+        output += to_string(node->val) + ", ";
+        q.push(node->left);
+        q.push(node->right);
+    }
+    return "[" + output.substr(0, output.length() - 2) + "]";
+}
+
 /*
 
 ****************************************************************
@@ -242,4 +289,9 @@ vector<size_t> sort_indexes(vector<T> &v)
          [&v](size_t i1, size_t i2)
          { return v[i1] < v[i2]; });
     return idx;
+}
+
+int lowbit(int x)
+{
+    return x & (-x);
 }

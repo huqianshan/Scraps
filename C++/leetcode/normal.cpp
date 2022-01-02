@@ -222,6 +222,7 @@ int findDuplicate(vector<int> &nums)
 
         target = ((1 + len) * len) / 2;
         return (target > sum) ? (target - sum) : (sum - target); */
+    return 1;
 }
 
 /*
@@ -1233,6 +1234,7 @@ int maxProfit3(vector<int> &prices)
  */
 int maxProfit4(vector<int> &prices)
 {
+    return 1;
 }
 
 /*

@@ -146,6 +146,161 @@ vector<vector<int>> reconstructQueue(vector<vector<int>> &people)
     sort(index.begin(), index.end(), [&people](int l, int r)
          { return people[l][0] < people[r][0]; });
     // print_vector(index);
+
+    vector<vector<int>> ans(len, {-1, -1});
+
+    for (int i = 0; i < len; i++)
+    {
+        int offset = people[index[i]][1];
+        int j = 0;
+        int tem = 0;
+        for (; j < len; j++)
+        {
+            if (ans[j][0] == -1 || ans[j][0] == people[index[i]][0])
+            {
+                tem++;
+            }
+            if (tem == offset)
+            {
+                break;
+            }
+        }
+        ans[j][0] = people[index[i]][0];
+        ans[j][1] = people[index[i]][1];
+    }
+    return ans;
+}
+
+/*
+
+307. 区域和检索 - 数组可修改
+给你一个数组 nums ，请你完成两类查询，其中一类查询要求更新数组下标对应的值，另一类查询要求返回数组中某个范围内元素的总和。
+
+实现 NumArray 类：
+
+NumArray(int[] nums) 用整数数组 nums 初始化对象
+void update(int index, int val) 将 nums[index] 的值更新为 val
+int sumRange(int left, int right) 返回子数组 nums[left, right] 的总和（即，nums[left] + nums[left + 1], ..., nums[right]）
+ */
+class NumArray
+{
+public:
+    vector<int> bits;
+    vector<int> nums;
+    int len;
+    int lowbit(int x)
+    {
+        return x & (-x);
+    }
+
+    //注：这里的求和将汇集到非终端结点（D00形式）
+    // BIT中仅非终端结点i值是 第0~i元素的和
+    //终端结点位置的元素和，将在求和函数中求得
+    // BIT中的index，比原数组中大1
+    NumArray(vector<int> &nums)
+    {
+        len = nums.size();
+        this->nums = nums;
+        bits.resize(len + 1);
+        for (int i = 1; i < len + 1; i++)
+        {
+            bits[i] = nums[i - 1];
+            for (int j = i - 2; j >= i - lowbit(i); j--)
+            {
+                bits[i] += nums[j];
+            }
+        }
+    }
+
+    void add(int index, int val)
+    {
+
+        for (int j = index; j < len + 1; j += lowbit(j))
+        {
+            // cout << j << endl;
+            bits[j] += val;
+        }
+    }
+
+    void update(int i, int val)
+    {
+        // 原有的值是 nums[i]，要使得修改为 val，需要增加 val - nums[i]
+        add(i + 1, val - nums[i]);
+        nums[i] = val;
+    }
+
+    int
+    sum(int k)
+    {
+        int ans = 0;
+        for (int i = k; i > 0; i -= lowbit(i))
+        {
+            ans += bits[i];
+        }
+        return ans;
+    }
+
+    int sumRange(int left, int right)
+    {
+        return sum(right + 1) - sum(left);
+    }
+};
+
+void does(vector<int> &nums)
+{
+    vector<int> tmp = nums;
+    sort(tmp.begin(), tmp.end());
+    for (auto &n : nums)
+    {
+        n = lower_bound(tmp.begin(), tmp.end(), n) - tmp.begin() + 1;
+    }
+}
+
+/*
+剑指 Offer 51. 数组中的逆序对
+在数组中的两个数字，如果前面一个数字大于后面的数字，则这两个数字组成一个逆序对。
+输入一个数组，求出这个数组中的逆序对的总数
+ */
+int reversePairs(vector<int> &nums)
+{
+    int len = nums.size();
+
+    does(nums);
+
+    vector<int> t(len);
+    NumArray bit(t);
+    int ans = 0;
+    for (int i = len - 1; i >= 0; i--)
+    {
+        ans += bit.sum(nums[i] - 1);
+        bit.add(nums[i], 1);
+    }
+    return ans;
+}
+
+int getId(int x, vector<int> a)
+{
+    return lower_bound(a.begin(), a.end(), x) - a.begin() + 1;
+}
+
+/*
+315
+ */
+vector<int> countSmaller(vector<int> &nums)
+{
+    int len = nums.size();
+
+    does(nums);
+
+    vector<int> t(len);
+    NumArray bit(t);
+    int tmp = 0;
+    for (int i = len - 1; i >= 0; i--)
+    {
+        tmp += bit.sum(nums[i] - 1);
+        bit.add(nums[i], 1);
+    }
+    return ans;
 }
 
 void test_greedy()
@@ -165,13 +320,26 @@ void test_greedy()
      nums = {2, 3, 0, 1, 4};
      print_expected(jump(nums), 2);
   */
+    // vector<vector<int>> s{{7, 0}, {4, 0}};
+    // auto a = reconstructQueue(s);
+    // vector<vector<int>> a(3, {-1, -1});
+    /*     vector<int> s{-1};
+        NumArray numArray(s);
+
+        print_vector(numArray.bits);
+        print_expected(numArray.sumRange(0, 0), -1); // 返回 9 ，sum([1,3,5]) = 9
+        numArray.update(0, 1);
+        print_vector(numArray.bits);                // nums = [1,2,5]
+        print_expected(numArray.sumRange(0, 0), 1); // 返回 8 ，sum([1,2,5]) = 8 */
+
+    vector<int> nums = {7, 5, 6, 4};
+    does(nums);
+    print_vector(nums);
+    print_vector(countSmaller(nums));
 }
 
 int main(int argc, char const *argv[])
 {
     test_greedy();
-
-    vector<int> a{3, 0, 12, 2};
-    print_vector(sort_indexes(a));
     return 0;
 }
