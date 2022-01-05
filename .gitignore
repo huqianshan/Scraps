@@ -52,8 +52,8 @@ Mkfile.old
 dkms.conf
 
 # vscode and cmakelists
-build/*
-bin/*
+**/build/*
+**/bin/*
 **/.vscode/*
 
 # binariy file

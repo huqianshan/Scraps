@@ -1297,6 +1297,23 @@ void test_climStairs_70()
     // cout << __builtin_popcount(3) << endl;
 }
 
+int fib3(int n)
+{
+    std::function<int(int, int, int)> iter;
+    iter = [n, &iter](int a, int b, int i)
+    {
+        if (i >= n)
+        {
+            return a;
+        }
+        else
+        {
+            return iter(b, b + a, i + 1);
+        }
+    };
+    return iter(0, 1, 0);
+}
+
 int main()
 {
 
@@ -1306,4 +1323,6 @@ int main()
     // printf("%d %d %d %d\n", 'a', 'z', 'A', 'Z');
     // test_findDisappearedNumbers_448();
     test_dp();
+    cout << fib3(10) << endl;
+    fib3(3);
 }
