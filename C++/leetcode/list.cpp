@@ -80,6 +80,84 @@ ListNode *removeNthFromEnd(ListNode *head, int n)
     return ans;
 }
 
+/*
+24. 两两交换链表中的节点
+给你一个链表，两两交换其中相邻的节点，并返回交换后链表的头节点。你必须在不修改节点内部的值的情况下完成本题（即，只能进行节点交换）
+ */
+ListNode *swapPairs(ListNode *head)
+{
+    // 1. 递归基
+    if (head == nullptr || head->next == nullptr)
+    {
+        return head;
+    }
+    // 2. 交换
+    ListNode *nxt = head->next;
+    head->next = swapPairs(nxt->next);
+    nxt->next = head;
+    return nxt;
+}
+/*
+25. K 个一组翻转链表
+给你一个链表，每 k 个节点一组进行翻转，请你返回翻转后的链表。
+
+k 是一个正整数，它的值小于或等于链表的长度。
+
+如果节点总数不是 k 的整数倍，那么请将最后剩余的节点保持原有顺序。
+
+进阶：
+
+你可以设计一个只使用常数额外空间的算法来解决此问题吗？
+你不能只是单纯的改变节点内部的值，而是需要实际进行节点交换
+ */
+ListNode *reverseKGroup(ListNode *head, int k)
+{
+    ListNode *dummyHead = new ListNode(0, head);
+    ListNode *slow = head;
+    ListNode *fast = head;
+    ListNode *ret_head = dummyHead;
+    ListNode *next = nullptr;
+    ListNode *new_head = nullptr;
+
+    int i = 1;
+    while (fast != nullptr)
+    {
+        // printf("No.%d val: %d\n", i, fast->val);
+        if (i % k == 0)
+        {
+            next = fast->next;
+            fast->next = nullptr;
+            // printf_node(slow);
+
+            ret_head->next = reverseList(slow);
+
+            slow->next = next;
+
+            ret_head = slow;
+            fast = slow;
+            slow = next;
+        }
+        fast = fast->next;
+        i++;
+    }
+    return dummyHead->next;
+}
+
+void test_24()
+{
+    string s = "[1,2,3,4,5]";
+    ListNode *head = stringToListNode(s);
+    printf_node(reverseKGroup(head, 1));
+
+    head = stringToListNode(s);
+    printf_node(reverseKGroup(head, 2));
+
+    head = stringToListNode(s);
+    printf_node(reverseKGroup(head, 3));
+
+    head = stringToListNode(s);
+    printf_node(reverseKGroup(head, 4));
+}
 Node *copyRandomList(Node *head)
 {
     if (!head)
@@ -98,7 +176,7 @@ Node *copyRandomList(Node *head)
         // iter to next raw_list node
         head = tem_node->next;
     }
-    // printf_node(raw_head);
+    // printf_node(raw_head)
     head = raw_head;
 
     // change random pointer in new_list
@@ -124,16 +202,6 @@ Node *copyRandomList(Node *head)
             new_list->next = head->next;
         }
     }
-
-    /*     head=raw_head;
-    tem_node=head->next;
-    head->next=tem_node->next;
-    head=head->next;
-    while(head){
-        new_list=head->next;
-        head->next=new_list->next;
-    } */
-    // printf_node(raw_head->next);
     return tem_node;
 }
 
@@ -470,6 +538,28 @@ ListNode *getIntersectionNode(ListNode *headA, ListNode *headB)
 }
 
 /*
+203. 移除链表元素
+给你一个链表的头节点 head 和一个整数 val ，请你删除链表中所有满足 Node.val == val 的节点，并返回 新的头节点 。
+ */
+ListNode *removeElements(ListNode *head, int val)
+{
+    ListNode *dummyHead = new ListNode(0, head);
+    ListNode *tem = dummyHead;
+    while (tem->next != nullptr)
+    {
+        if (tem->next->val == val)
+        {
+            tem->next = tem->next->next;
+        }
+        else
+        {
+            tem = tem->next;
+        }
+    }
+    return dummyHead->next;
+}
+
+/*
 234. 回文链表
 给你一个单链表的头节点 head ，请你判断该链表是否为回文链表。如果是，返回 true ；否则，返回 false 。
  */
@@ -503,15 +593,7 @@ void test_list()
 
     string s = "[5,4,3,1,2]";
     ListNode *head = stringToListNode(s);
-    printf_node(head, true);
-    // print_expected(141, hasCycle(head), false);
-
-    // print_expected(19, removeNthFromEnd(head, 2));
-    // printf_node(removeNthFromEnd(head, 5), true);
-    printf_node(sortList(head));
-    s = "[2,1,1,1]";
-    head = stringToListNode(s);
-    printf_node(sortList(head));
+    test_24();
 }
 
 void test_lru()
@@ -539,6 +621,6 @@ void test_lru()
 
 int main()
 {
-    // test_list();
-    test_lru();
+    test_list();
+    // test_lru();
 }

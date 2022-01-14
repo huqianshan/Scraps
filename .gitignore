@@ -55,6 +55,7 @@ dkms.conf
 **/build/*
 **/bin/*
 **/.vscode/*
+**/.VSCodeCounter/**
 
 # binariy file
 **/benchmarking

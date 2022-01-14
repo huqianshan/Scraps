@@ -24,7 +24,7 @@
     },
     "For Loop in CPP": {
         "prefix": "fora",
-        "body": "for (auto i:$1)\n{\n$0\n}"
+        "body": "for (auto ${1:n}:${2:nums})\n{\n\t$0\n}"
     },
     "Define and For Loop": {
         "prefix": "dfor",
@@ -39,11 +39,15 @@
         "body": "fprintf(${1:stderr}, \"${2:%s}\\\\n\", $3);$4"
     },
     "printf": {
-        "prefix": "printf",
-        "body": "printf(\"${1:%s }\\n\", $2);$3"
+        "prefix": "pi",
+        "body": "printf(\"${1:%d }\\n\", $2);$3"
     },
     "scanf": {
         "prefix": "scanf",
         "body": "scanf(\"${1:%s}\\n\", $2);$3"
+    },
+    "test": {
+        "prefix": "test",
+        "body": "void test_${1:512}(){\n\t${0};\n}"
     }
 }

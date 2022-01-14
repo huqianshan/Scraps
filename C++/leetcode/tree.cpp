@@ -409,6 +409,46 @@ int maxPathSum(TreeNode *root)
 }
 
 /*
+222. 完全二叉树的节点个数
+给你一棵 完全二叉树 的根节点 root ，求出该树的节点个数。
+
+完全二叉树 的定义如下：在完全二叉树中，除了最底层节点可能没填满外，其余每层节点数都达到最大值，并且最下面一层的节点都集中在该层最左边的若干位置。若最底层为第 h 层，则该层包含 1~ 2h 个节点。
+ */
+int countNodes(TreeNode *root)
+{
+    if (root == nullptr)
+        return 0;
+    TreeNode *left = root->left;
+    TreeNode *right = root->right;
+    int leftHeight = 0, rightHeight = 0; // 这里初始为0是有目的的，为了下面求指数方便
+    while (left)
+    { // 求左子树深度
+        left = left->left;
+        leftHeight++;
+    }
+    while (right)
+    { // 求右子树深度
+        right = right->right;
+        rightHeight++;
+    }
+    if (leftHeight == rightHeight)
+    {
+        return (2 << leftHeight) - 1; // 注意(2<<1) 相当于2^2，所以leftHeight初始为0
+    }
+    return countNodes(root->left) + countNodes(root->right) + 1;
+}
+int countNodes_On(TreeNode *root)
+{
+    if (root == nullptr)
+    {
+        return 0;
+    }
+    int num = countNodes_On(root->left);
+    int mun = countNodes_On(root->right);
+    return num + mun + 1;
+}
+
+/*
 226. 翻转二叉树
 翻转一棵二叉树。
  */
@@ -429,6 +469,39 @@ TreeNode *invertTree(TreeNode *root)
 {
     invertNode(root);
     return root;
+}
+
+/*
+257. 二叉树的所有路径
+给你一个二叉树的根节点 root ，按 任意顺序 ，返回所有从根节点到叶子节点的路径。
+
+叶子节点 是指没有子节点的节点。
+ */
+vector<string> path;
+void traves_recur(TreeNode *root, string single_path)
+{
+    // 1.确定递归基
+    if (root == nullptr)
+    {
+        return;
+    }
+    single_path += to_string(root->val);
+    if (root->left == nullptr && root->right == nullptr)
+    {
+        path.push_back(single_path);
+        return;
+    }
+
+    single_path += "->";
+
+    traves_recur(root->left, single_path);
+    traves_recur(root->right, single_path);
+}
+
+vector<string>
+binaryTreePaths(TreeNode *root)
+{
+    return {};
 }
 
 /*
@@ -573,7 +646,7 @@ vector<double> averageOfLevels(TreeNode *root)
 
 void test_tree()
 {
-    string s = "[1,2,3,4]";
+    string s = "[1,2,3,null,5]";
     TreeNode *root = stringToTreeNode(s);
     // test_94();
     // test_102(root);
@@ -586,7 +659,10 @@ void test_tree()
     // root = stringToTreeNode(s);
     // test_102(root);
     // flatten(root);
-    test_538();
+    // test_538();
+    // print_expected(222, countNodes(root), 4);
+    traves_recur(root, "");
+    print_vector(path);
 }
 
 int main(int argc, char const *argv[])
