@@ -1,6 +1,35 @@
 #include "helper.h"
 
 /*
+42. 接雨水
+给定 n 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。
+ */
+int trap(vector<int> &height)
+{
+    stack<int> stk;
+    int rain = 0;
+    int len = height.size();
+    for (int i = 0; i < len; i++)
+    {
+        while (!stk.empty() && height[i] > height[stk.top()])
+        {
+            int tem = stk.top();
+            stk.pop();
+
+            if (stk.empty())
+            {
+                break;
+            }
+            int left = stk.top();
+            int curr_width = i - left - 1;
+            int curr_hegith = min(height[left], height[i]) - height[tem];
+            rain += (curr_hegith * curr_width);
+        }
+        stk.push(i);
+    }
+    return rain;
+}
+/*
 150. 逆波兰表达式求值
 根据 逆波兰表示法，求表达式的值。
 有效的算符包括 +、-、*、/ 。每个运算对象可以是整数，也可以是另一个逆波兰表达式。
@@ -306,6 +335,70 @@ void test_topK()
 }
 
 /*
+394. 字符串解码
+给定一个经过编码的字符串，返回它解码后的字符串。
+
+编码规则为: k[encoded_string]，表示其中方括号内部的 encoded_string 正好重复 k 次。注意 k 保证为正整数。
+
+你可以认为输入字符串总是有效的；输入字符串中没有额外的空格，且输入的方括号总是符合格式要求的。
+
+此外，你可以认为原始数据不包含数字，所有的数字只表示重复的次数 k ，例如不会出现像 3a 或 2[4] 的输入。
+ */
+string decodeString(string s)
+{
+    stack<char> stk_char;
+
+    for (auto c : s)
+    {
+        if (c == ']')
+        { // 出栈
+            string tem;
+            while (stk_char.top() != '[')
+            {
+                tem = stk_char.top() + tem;
+                stk_char.pop();
+            }
+            stk_char.pop(); // 弹出'['
+            string digit;
+            while (!stk_char.empty() && isdigit(stk_char.top()))
+            {
+                digit = stk_char.top() + digit;
+                stk_char.pop();
+            }
+            int num = stoi(digit);
+            for (int i = 0; i < num; i++)
+            {
+                for (auto j : tem)
+                {
+                    stk_char.push(j);
+                }
+            }
+        }
+        else
+        {
+            stk_char.push(c);
+        }
+    }
+    int len = stk_char.size();
+    string ret(len, '0');
+    for (int i = len - 1; i >= 0; i--)
+    {
+        ret[i] = stk_char.top();
+        stk_char.pop();
+    }
+    return ret;
+}
+void test_decode()
+{
+    string s = "3[a]2[bc]";
+    string ret_expected = "aaabcbc";
+    print_expected(394, decodeString(s), ret_expected);
+
+    s = "10[leetcode]";
+    cout << decodeString(s) << endl;
+}
+
+/*
 1047. 删除字符串中的所有相邻重复项
 给出由小写字母组成的字符串 S，重复项删除操作会选择两个相邻且相同的字母，并删除它们。
 
@@ -355,6 +448,14 @@ int main(int argc, char const *argv[])
 
     // test_max();
 
-    test_topK();
+    // test_topK();
+
+    test_decode();
+
+    char c = '1';
+    // return 0 indicates true
+    printf("%d %d %d %d \n", isdigit(c), islower('c'), isalpha('Z'), isupper('C'));
+
+    string s(3, 'c');
     return 0;
 }

@@ -293,6 +293,24 @@ void print_expected(int num, T ret, T expected)
 }
 
 template <typename T>
+void print_expected(int num, vector<T> ret, vector<T> expected)
+{
+    cout << "LeetCode " << num << ": ";
+    if (ret == expected)
+    {
+        cout << " Pass" << endl;
+    }
+    else
+    {
+        cout << " Fail" << endl;
+    }
+    cout << "    Return:   ";
+    print_vector(ret);
+    cout << "    Expected: ";
+    print_vector(expected);
+}
+
+template <typename T>
 void print_expected(T ret, T expected)
 {
     print_expected(0, ret, expected);
@@ -328,3 +346,29 @@ char intToChar(int n)
 {
     return (char)(n + '0');
 }
+
+bool isDigit(char c)
+{
+    if (c >= '0' && c <= '9')
+    {
+        return true;
+    }
+    return false;
+}
+
+/*
+计算 begin 到end 之间区间和
+左开右闭
+ */
+template <typename T>
+T vector_sumrange(vector<T> arr, int begin, int end)
+{
+    int len = arr.size();
+    T ret = 0;
+    for (int i = begin; i < end; i++)
+    {
+        ret += arr[i];
+    }
+    return ret;
+}
+// boolg islower

@@ -6,7 +6,6 @@
 144. 二叉树的前序遍历
 给你二叉树的根节点 root ，返回它节点值的 前序 遍历。
  */
-
 void traverse(TreeNode *root, vector<int> &ans)
 {
     if (root == NULL)
@@ -131,6 +130,40 @@ void test_94()
     print_vector(ans);
 }
 
+/*
+96. 不同的二叉搜索树
+给你一个整数 n ，
+求恰由 n 个节点组成且节点值从 1 到 n 互不相同的 二叉搜索树 有多少种？
+返回满足题意的二叉搜索树的种数。
+ */
+int numTrees(int n)
+{
+    if (n <= 2)
+    {
+        return n;
+    }
+
+    vector<int> nums(n + 1, 0);
+    nums[0] = 1;
+    nums[1] = 1;
+    nums[2] = 2;
+    for (int i = 3; i <= n; i++)
+    {
+        for (int j = 0; j < i; j++)
+        {
+            nums[i] += nums[j] * nums[i - 1 - j];
+        }
+    }
+    return nums[n];
+}
+void test_96()
+{
+    vector<int> nums{1, 2, 3, 4};
+    for (auto n : nums)
+    {
+        cout << numTrees(n) << endl;
+    }
+}
 /*
 101. 对称二叉树
 给定一个二叉树，检查它是否是镜像对称的。
@@ -264,6 +297,61 @@ int minDepth(TreeNode *root)
         }
     }
     return depth;
+}
+
+/*
+106. 从中序与后序遍历序列构造二叉树
+根据一棵树的中序遍历与后序遍历构造二叉树。
+注意:
+你可以假设树中没有重复的元素
+*/
+// 中序区间：[inorderBegin, inorderEnd)，后序区间[postorderBegin, postorderEnd)
+TreeNode *traversal(vector<int> &inorder, int inorderBegin, int inorderEnd,
+                    vector<int> &postorder, int postorderBegin, int postorderEnd)
+{
+    if (postorderBegin == postorderEnd)
+        return NULL;
+
+    int rootValue = postorder[postorderEnd - 1];
+    TreeNode *root = new TreeNode(rootValue);
+
+    if (postorderEnd - postorderBegin == 1)
+        return root;
+
+    int delimiterIndex;
+    for (delimiterIndex = inorderBegin; delimiterIndex < inorderEnd; delimiterIndex++)
+    {
+        if (inorder[delimiterIndex] == rootValue)
+            break;
+    }
+    // 切割中序数组
+    // 左中序区间，左闭右开[leftInorderBegin, leftInorderEnd)
+    int leftInorderBegin = inorderBegin;
+    int leftInorderEnd = delimiterIndex;
+    // 右中序区间，左闭右开[rightInorderBegin, rightInorderEnd)
+    int rightInorderBegin = delimiterIndex + 1;
+    int rightInorderEnd = inorderEnd;
+
+    // 切割后序数组
+    // 左后序区间，左闭右开[leftPostorderBegin, leftPostorderEnd)
+    int leftPostorderBegin = postorderBegin;
+    int leftPostorderEnd = postorderBegin + delimiterIndex - inorderBegin; // 终止位置是 需要加上 中序区间的大小size
+    // 右后序区间，左闭右开[rightPostorderBegin, rightPostorderEnd)
+    int rightPostorderBegin = postorderBegin + (delimiterIndex - inorderBegin);
+    int rightPostorderEnd = postorderEnd - 1; // 排除最后一个元素，已经作为节点了
+
+    root->left = traversal(inorder, leftInorderBegin, leftInorderEnd, postorder, leftPostorderBegin, leftPostorderEnd);
+    root->right = traversal(inorder, rightInorderBegin, rightInorderEnd, postorder, rightPostorderBegin, rightPostorderEnd);
+
+    return root;
+}
+
+TreeNode *buildTree(vector<int> &inorder, vector<int> &postorder)
+{
+    if (inorder.size() == 0 || postorder.size() == 0)
+        return NULL;
+    // 左闭右开的原则
+    return traversal(inorder, 0, inorder.size(), postorder, 0, postorder.size());
 }
 
 /*
@@ -409,6 +497,69 @@ int maxPathSum(TreeNode *root)
 }
 
 /*
+208. 实现 Trie (前缀树)
+Trie（发音类似 "try"）或者说 前缀树 是一种树形数据结构，用于高效地存储和检索字符串数据集中的键。这一数据结构有相当多的应用情景，例如自动补完和拼写检查。
+
+请你实现 Trie 类：
+
+Trie() 初始化前缀树对象。
+void insert(String word) 向前缀树中插入字符串 word 。
+boolean search(String word) 如果字符串 word 在前缀树中，返回 true（即，在检索之前已经插入）；否则，返回 false 。
+boolean startsWith(String prefix) 如果之前已经插入的字符串 word 的前缀之一为 prefix ，返回 true ；否则，返回 false 。
+ */
+
+class Trie
+{
+private:
+    vector<Trie *> children;
+    bool isEnd;
+
+    Trie *searchPrefix(string prefix)
+    {
+        Trie *node = this;
+        for (char ch : prefix)
+        {
+            ch -= 'a';
+            if (node->children[ch] == nullptr)
+            {
+                return nullptr;
+            }
+            node = node->children[ch];
+        }
+        return node;
+    }
+
+public:
+    Trie() : children(26), isEnd(false) {}
+
+    void insert(string word)
+    {
+        Trie *node = this;
+        for (char ch : word)
+        {
+            ch -= 'a';
+            if (node->children[ch] == nullptr)
+            {
+                node->children[ch] = new Trie();
+            }
+            node = node->children[ch];
+        }
+        node->isEnd = true;
+    }
+
+    bool search(string word)
+    {
+        Trie *node = this->searchPrefix(word);
+        return node != nullptr && node->isEnd;
+    }
+
+    bool startsWith(string prefix)
+    {
+        return this->searchPrefix(prefix) != nullptr;
+    }
+};
+
+/*
 222. 完全二叉树的节点个数
 给你一棵 完全二叉树 的根节点 root ，求出该树的节点个数。
 
@@ -485,13 +636,13 @@ void traves_recur(TreeNode *root, string single_path)
     {
         return;
     }
+
     single_path += to_string(root->val);
     if (root->left == nullptr && root->right == nullptr)
     {
         path.push_back(single_path);
         return;
     }
-
     single_path += "->";
 
     traves_recur(root->left, single_path);
@@ -504,6 +655,62 @@ binaryTreePaths(TreeNode *root)
     return {};
 }
 
+/*
+404. 左叶子之和
+计算给定二叉树的所有左叶子之和。
+ */
+
+int sumOfLeftLeaves(TreeNode *root)
+{
+    // 1. base
+    if (root == nullptr)
+    {
+        return 0;
+    }
+
+    int cur = 0;
+    if (root->left && root->left->right == nullptr && root->left->left == nullptr)
+    {
+        cur = root->left->val;
+        printf("%p %d \n", root, cur);
+    }
+    return cur + sumOfLeftLeaves(root->left) + sumOfLeftLeaves(root->right);
+}
+
+/*
+437. 路径总和 III
+给定一个二叉树的根节点 root ，和一个整数 targetSum ，求该二叉树里节点值之和等于 targetSum 的 路径 的数目。
+路径 不需要从根节点开始，也不需要在叶子节点结束，但是路径方向必须是向下的（只能从父节点到子节点）。
+ */
+int travels(TreeNode *root, int pathSum)
+{
+    if (root == nullptr)
+    {
+        return 0;
+    }
+
+    int ret = 0;
+    if (pathSum - root->val == 0)
+    {
+        ret++;
+    }
+    ret += travels(root->left, pathSum - root->val);
+    ret += travels(root->right, pathSum - root->val);
+    return ret;
+}
+
+int pathSum(TreeNode *root, int targetSum)
+{
+    if (root == nullptr)
+    {
+        return 0;
+    }
+    int ret = 0;
+    ret = travels(root, targetSum);
+    ret += pathSum(root->left, targetSum);
+    ret += pathSum(root->right, targetSum);
+    return ret;
+}
 /*
 515. 在每个树行中找最大值
 给定一棵二叉树的根节点 root ，请找出该二叉树中每一层的最大值。
@@ -647,6 +854,7 @@ vector<double> averageOfLevels(TreeNode *root)
 void test_tree()
 {
     string s = "[1,2,3,null,5]";
+    s = "[3,9,20,null,null,15,7]";
     TreeNode *root = stringToTreeNode(s);
     // test_94();
     // test_102(root);
@@ -661,8 +869,10 @@ void test_tree()
     // flatten(root);
     // test_538();
     // print_expected(222, countNodes(root), 4);
-    traves_recur(root, "");
-    print_vector(path);
+    // traves_recur(root, "");
+    // print_vector(path);
+    // cout << sumOfLeftLeaves(root) << endl;
+    test_96();
 }
 
 int main(int argc, char const *argv[])

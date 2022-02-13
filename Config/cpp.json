@@ -49,5 +49,9 @@
     "test": {
         "prefix": "test",
         "body": "void test_${1:512}(){\n\t${0};\n}"
+    },
+    "vector_int": {
+        "prefix": "veci",
+        "body": "vector<int> nums${0};"
     }
 }

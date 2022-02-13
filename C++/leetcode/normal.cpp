@@ -44,7 +44,6 @@ vector<int> twoSum2(vector<int> &nums, int target)
 704. 二分查找
 给定一个 n 个元素有序的（升序）整型数组 nums 和一个目标值 target  ，写一个函数搜索 nums 中的 target，如果目标值存在返回下标，否则返回 -1。
  */
-
 int search(vector<int> &nums, int target)
 {
     int left = 0, right = nums.size() - 1;
@@ -88,7 +87,6 @@ int search(vector<int> &nums, int target)
     int len = nums.size();
     int i = 0;
 } */
-
 vector<int> searchRange2(vector<int> &nums, int target)
 {
     int begin = -1, end = -1;
@@ -122,6 +120,127 @@ vector<int> searchRange2(vector<int> &nums, int target)
     return {begin, end};
 }
 
+/*
+33. 搜索旋转排序数组
+整数数组 nums 按升序排列，数组中的值 互不相同 。
+
+在传递给函数之前，nums 在预先未知的某个下标 k（0 <= k < nums.length）上进行了 旋转，使数组变为 [nums[k], nums[k+1], ..., nums[n-1], nums[0], nums[1], ..., nums[k-1]]（下标 从 0 开始 计数）。例如， [0,1,2,4,5,6,7] 在下标 3 处经旋转后可能变为 [4,5,6,7,0,1,2] 。
+
+给你 旋转后 的数组 nums 和一个整数 target ，如果 nums 中存在这个目标值 target ，则返回它的下标，否则返回 -1 。
+ */
+int search_range(vector<int> &nums, int begin, int end, int target)
+{
+    int len = nums.size();
+    if (end >= len || begin < 0 || begin > end)
+    {
+        return -1;
+    }
+    int left = begin, right = end;
+    int mid = 0;
+    while (left <= right)
+    {
+        mid = (right - left) / 2 + left;
+        if (nums[mid] == target)
+        {
+            return mid;
+        }
+        else if (nums[mid] > target)
+        {
+            right = mid - 1;
+        }
+        else if (nums[mid] < target)
+        {
+            left = mid + 1;
+        }
+    }
+    return -1;
+}
+
+int search_rotate(vector<int> &nums, int target)
+{
+    int len = nums.size();
+    if (len == 1)
+    {
+        return (nums[0] == target) ? 0 : -1;
+    }
+    int point = -1;
+    for (int i = 1; i < len; i++)
+    {
+        if (nums[i - 1] <= nums[i])
+        { // 升序排列
+            continue;
+        }
+        else
+        {
+            point = i;
+            break;
+        }
+    }
+    point = (point == -1) ? len : point;
+    int ret = search_range(nums, 0, point - 1, target);
+    if (ret != -1)
+    {
+        return ret;
+    }
+    ret = search_range(nums, point, len - 1, target);
+    return ret;
+}
+int search_rotate2(vector<int> &nums, int target)
+{
+    int len = nums.size();
+    if (len == 1)
+    {
+        return (nums[0] == target) ? 0 : -1;
+    }
+    int left = 0, right = len - 1;
+    int mid = 0;
+    while (left <= right)
+    {
+        mid = (right + left) / 2;
+        if (nums[mid] == target)
+        {
+            return mid;
+        }
+        else if (nums[0] <= nums[mid])
+        {
+            if (target >= nums[0] && target < nums[mid])
+            {
+                right = mid - 1;
+            }
+            else
+            {
+                left = mid + 1;
+            }
+        }
+        else
+        {
+            if (target <= nums[len - 1] && target > nums[mid])
+            {
+                left = mid + 1;
+            }
+            else
+            {
+                right = mid - 1;
+            }
+        }
+    }
+    return -1;
+}
+
+void test_binary_search()
+{
+    vector<int> nums = {3, 4, 1, 2};
+    print_expected(33, search_rotate2(nums, 5), -1);
+    print_expected(33, search_rotate2(nums, 2), 3);
+    nums = {1, 2, 3, 4};
+    print_expected(33, search_rotate2(nums, 1), 0);
+    nums = {3};
+    print_expected(33, search_rotate2(nums, 3), 0);
+    print_expected(33, search_rotate2(nums, 2), -1);
+
+    nums = {3, 1};
+    print_expected(33, search_rotate2(nums, 1), 1);
+}
 /*
 209. 长度最小的子数组
 给定一个含有 n 个正整数的数组和一个正整数 target 。
@@ -776,7 +895,9 @@ int main()
     // cout << toLowerCase("Abaa") << endl;
     // printf("%d %d %d %d\n", 'a', 'z', 'A', 'Z');
     // test_findDisappearedNumbers_448();
-    test_dp();
+    // test_dp();
+
+    test_binary_search();
     cout << fib3(10) << endl;
-    fib3(3);
+    // fib3(3);
 }

@@ -300,7 +300,56 @@ vector<int> countSmaller(vector<int> &nums)
         tmp += bit.sum(nums[i] - 1);
         bit.add(nums[i], 1);
     }
-    return ans;
+    return {};
+}
+
+/*
+621. 任务调度器
+给你一个用字符数组 tasks 表示的 CPU 需要执行的任务列表。
+其中每个字母表示一种不同种类的任务。
+任务可以以任意顺序执行，并且每个任务都可以在 1 个单位时间内执行完。
+在任何一个单位时间，CPU 可以完成一个任务，或者处于待命状态。
+
+然而，两个 相同种类 的任务之间必须有长度为整数 n 的冷却时间，因此至少有连续 n 个单位时间内 CPU 在执行不同的任务，或者在待命状态。
+
+你需要计算完成所有任务所需要的 最短时间 。
+
+
+方法一： 模拟
+失败尝试： 双循环 遍历n次，问题在于 hashmap可能会选择
+        n,m
+        z,s
+        a,x
+        a,x
+而不是
+        a,n
+        a,m,
+        z,s
+
+所以，需要选择 未命中的、出现次数最多的task
+
+方法二：归纳
+    ret=max( (max_times-1)*n + count(times==max_times),
+             task.size())
+ */
+int leastInterval(vector<char> &tasks, int n)
+{
+    vector<int> vec(26);
+    for (auto t : tasks)
+    {
+        vec[t - 'A']++;
+    }
+    auto max_char = max_element(vec.begin(), vec.end());
+    int max_occ_num = *max_char;
+    int done_time = 0;
+    for (auto v : vec)
+    {
+        if (v == max_occ_num)
+        {
+            done_time++;
+        }
+    }
+    return max(done_time + (n + 1) * (max_occ_num - 1), static_cast<int>(tasks.size()));
 }
 
 void test_greedy()
@@ -332,14 +381,23 @@ void test_greedy()
         print_vector(numArray.bits);                // nums = [1,2,5]
         print_expected(numArray.sumRange(0, 0), 1); // 返回 8 ，sum([1,2,5]) = 8 */
 
-    vector<int> nums = {7, 5, 6, 4};
-    does(nums);
-    print_vector(nums);
-    print_vector(countSmaller(nums));
+    /*   vector<int> nums = {7, 5, 6, 4};
+      does(nums);
+      print_vector(nums);
+      print_vector(countSmaller(nums)); */
+
+    // task_schedule
+    vector<char> s = {'A', 'A', 'B', 'A', 'B', 'A'};
+    int n = 2;
+    print_expected(621, leastInterval(s, n), 10);
+
+    n = 1;
+    print_expected(621, leastInterval(s, n), 7);
 }
 
 int main(int argc, char const *argv[])
 {
     test_greedy();
+    cout << "Test Finishedn" << endl;
     return 0;
 }
