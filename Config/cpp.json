@@ -2,7 +2,7 @@
     "cout": {
         "prefix": "cout",
         "body": [
-            "cout<<$1<<endl;"
+            "cout<<\"\"<<$1<<\"\"<<endl;"
         ]
     },
     "#include <>": {
@@ -24,11 +24,7 @@
     },
     "For Loop in CPP": {
         "prefix": "fora",
-        "body": "for (auto ${1:n}:${2:nums})\n{\n\t$0\n}"
-    },
-    "Define and For Loop": {
-        "prefix": "dfor",
-        "body": "size_t ${1:i};\nfor (${1:i} = ${2:0}; ${1:i} < ${3:count}; ${1:i}${4:++}) {\n\t$5\n}"
+        "body": "for (auto &&${1:n}:${2:nums})\n{\n\t$0\n}"
     },
     "While Loop": {
         "prefix": "while",

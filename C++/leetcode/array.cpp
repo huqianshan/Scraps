@@ -1,6 +1,37 @@
 #include "helper.h"
 
 /*
+ 剑指offer3
+    二维数组查找
+ */
+bool Find(int target, vector<vector<int>> array)
+{
+    int row = array.size();
+    if (row == 0)
+    {
+        return false;
+    }
+    int col = array[0].size();
+    int i = 0;
+    int j = col - 1;
+    while (i != row && j >= 0)
+    {
+        if (array[i][j] == target)
+        {
+            return true;
+        }
+        else if (array[i][j] < target)
+        {
+            i++;
+        }
+        else if (array[i][j] > target)
+        {
+            j--;
+        }
+    }
+    return false;
+}
+/*
 4. 寻找两个正序数组的中位数
 给定两个大小分别为 m 和 n 的正序（从小到大）数组 nums1 和 nums2。;
 请你找出并返回这两个正序数组的 中位数 。

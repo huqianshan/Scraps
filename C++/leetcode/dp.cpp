@@ -1,6 +1,26 @@
 #include "helper.h"
 
 /*
+ 最大和的连续子数组
+ */
+
+vector<int> maxSumArray(vector<int> &nums)
+{
+    int len = nums.size();
+    if (len <= 0)
+    {
+        return {};
+    }
+
+    int sum = nums[0];
+    int begin = 0;
+    int end = 0;
+    int tmp_begin = 0;
+    int max_sum = nums[0];
+    for
+}
+
+/*
 5. 最长回文子串
 给你一个字符串 s，找到 s 中最长的回文子串。
  */

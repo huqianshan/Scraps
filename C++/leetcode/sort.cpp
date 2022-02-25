@@ -12,14 +12,37 @@
     此时，【l,i】区间内的均小于pivot,[i+1,r-1]区间内的均大于pivot，再将nums[i+1]与nums[right]交换
 
 优化：
-    partition函数可以双向扫描，而非单向swap
+    partition函数可以双向扫描，而非单向swap，也就是 双指针 方法
  */
-int partition(vector<int> &nums, int left, int right, int pivotIndex)
+int partition_double(vector<int> &nums, int left, int right, int pivotIndex)
+{
+    int pivotValue = nums[pivotIndex];
+    swap(nums[pivotIndex], nums[right]);
+    int l = left, r = right; // 这里我也不知道为什么不能取right-1
+    while (l < r)
+    {
+        while (l < r && nums[l] <= pivotValue)
+        {
+            l++;
+        }
+        while (l < r && nums[r] >= pivotValue)
+        {
+            r--;
+        }
+        if (l < r)
+        {
+            swap(nums[l], nums[r]); // 此时 nums[r]<nums[pivotValue]<nums[l]
+        }
+    }
+    swap(nums[right], nums[l]);
+    return l;
+}
+int partition_raw(vector<int> &nums, int left, int right, int pivotIndex)
 {
     int pivotValue = nums[pivotIndex];
     swap(nums[pivotIndex], nums[right]);
     int storeIndex = left; // i
-    for (int j = left; j <= right - 1; j++)
+    for (int j = left; j < right; j++)
     {
         if (nums[j] < pivotValue)
         {
@@ -29,6 +52,10 @@ int partition(vector<int> &nums, int left, int right, int pivotIndex)
     }
     swap(nums[right], nums[storeIndex]);
     return storeIndex;
+}
+int partition(vector<int> &nums, int left, int right, int pivotIndex)
+{
+    return partition_double(nums, left, right, pivotIndex);
 }
 
 void quickSort(vector<int> &nums, int left, int right)
@@ -47,6 +74,9 @@ void quickSort(vector<int> &nums, int left, int right)
 /* 变式-1 快速选择算法
    当pivotIndex==k时，返回
    小于，则在左边递归，大于在右边递归
+
+   优化：
+    五路查询、取中位数
  */
 int quickSelect(vector<int> &nums, int left, int right, int targetIndex)
 {
@@ -131,6 +161,52 @@ class B : public virtual A
 {
 };
 
+class Foo
+{
+public:
+    int value_a;
+    int value_b;
+    Foo(int a, int b) : value_a(a), value_b(b) {}
+};
+
+class MagicFoo
+{
+public:
+    std::vector<int> vec;
+    /*    MagicFoo(std::initializer_list<int> list)
+       {
+           for (std::initializer_list<int>::iterator it = list.begin();
+                it != list.end(); ++it)
+               vec.push_back(*it);
+       } */
+};
+
+template <typename... T>
+auto sum(T... t)
+{
+    return (t + ...);
+}
+
+void reference(int &v)
+{
+    std::cout << "left value" << std::endl;
+}
+void reference(int &&v)
+{
+    std::cout << "right value" << std::endl;
+}
+template <typename T>
+void pass(T &&v)
+{
+    std::cout << "Normal argumenttt:";
+    reference(v); // 始终调用 reference(int&)
+}
+
+int test_string(string s)
+{
+    cout << s << endl;
+    return 3;
+}
 int main(int argc, char const *argv[])
 {
     // cout << 3 % 1 << endl;
@@ -139,8 +215,8 @@ int main(int argc, char const *argv[])
     // vector<int> nums = {1, 1, 1, 1, 2, 1};
     vector<int> nums = {1, 1, 2, 2, 3, 4, -1};
     nums = {3, 2, 3, 1, 2, 4, 5, 5, 6};
-    // quickSort(nums, 0, nums.size() - 1);
-    heapSort(nums);
+    quickSort(nums, 0, nums.size() - 1);
+    // heapSort(nums);
     print_vector(nums);
 
     int a = 3;
@@ -155,5 +231,33 @@ int main(int argc, char const *argv[])
     // hp = &a; // 顶层const 修饰指针,不可改变 指针
     printf("%d %d\n", sizeof(A), sizeof(B));
 
-    return 0;
+    // Foo s = {1, 2};
+    MagicFoo ms{vector<int>{1, 2}};
+    print_vector(ms.vec);
+
+    cout << sum(1, 2, 3, 4, 5) << endl;
+
+    std::cout << "right value" << std::endl;
+    pass(std::move(1)); // 1是右值, 但输出是左值
+
+    std::cout << "left value" << std::endl;
+    int l = 1;
+    pass(std::move(l)); // l 是左值, 输出左值    return 0;
+
+    const char *str = "abc";
+    // str[2] = 'c';
+    cout << str << endl;
+
+    string s1("12345");
+    string s2 = s1;
+    cout << (s1 == s2) << endl;
+    s1[0] = '6';
+    cout << "s1 = " << s1 << endl; // 62345
+    cout << "s2 = " << s2 << endl; // 12345
+    cout << (s1 == s2) << endl;
+
+    char t[] = "123";
+
+    string s = (std::move(string(static_cast<const char *>(t))));
+    test_string(s);
 }
