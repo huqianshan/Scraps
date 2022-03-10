@@ -154,6 +154,56 @@ void heapSort(vector<int> &nums)
     }
 }
 
+/*
+*********************************
+*****       MergeSort       *****
+*********************************
+*/
+void mergeSort(vector<int> &nums, vector<int> &tmp, int start, int end)
+{
+    if (start >= end) // why equal?
+    {
+        return;
+    }
+    int mid = start + (end - start) / 2;
+    mergeSort(nums, tmp, start, mid);
+    mergeSort(nums, tmp, mid + 1, end);
+
+    int i = start;
+    int j = mid + 1;
+    int cnt = 0;
+    while (i <= mid && j <= end)
+    {
+        if (nums[i] <= nums[j])
+        {
+            tmp[cnt++] = nums[i++];
+        }
+        else
+        {
+            tmp[cnt++] = nums[j++];
+        }
+    }
+    while (i <= mid)
+    {
+        tmp[cnt++] = nums[i++];
+    }
+    while (j <= end)
+    {
+        tmp[cnt++] = nums[j++];
+    }
+    for (int i = 0; i < end - start + 1; i++)
+    {
+        nums[i + start] = tmp[i];
+    }
+}
+
+vector<int> sortArray(vector<int> &nums)
+{
+    vector<int> tmp((int)nums.size(), 0);
+    mergeSort(nums, tmp, 0, (int)nums.size() - 1);
+    return nums;
+}
+
 class A
 {
 };

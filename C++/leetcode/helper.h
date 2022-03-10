@@ -1,3 +1,14 @@
+/**
+ * @file helper.h
+ * @author hjl-N501 (1196455147@qq.com)
+ * @brief 头文件包含以及一些辅助函数
+ * @version 0.1
+ * @date 2022-03-10
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
+
 #include <algorithm>
 #include <cassert>
 #include <chrono>
@@ -6,6 +17,7 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include <list>
 #include <numeric>
 #include <queue>
 #include <stack>
@@ -40,7 +52,6 @@ using namespace std;
 #endif
 
 /* Definition for a binary tree node. */
-
 struct TreeNode
 {
     int val;
@@ -79,10 +90,6 @@ struct ListNode
 
     ListNode(vector<int> &nums)
     {
-        // ListNode nd(i);
-        // for (auto i : nums)
-        // {
-        // }
     }
 };
 
@@ -226,7 +233,7 @@ string treeNodeToString(TreeNode *root)
 ****************************************************************
 */
 template <typename T>
-void print_vector(vector<T> nums)
+void print_vector(const vector<T> &nums)
 {
     cout << "[";
     for (auto i : nums)
@@ -237,7 +244,7 @@ void print_vector(vector<T> nums)
 }
 
 template <typename T>
-void print_queue(T q)
+void print_queue(const T &q)
 { // NB: pass by value so the print uses a copy
     while (!q.empty())
     {
@@ -293,7 +300,7 @@ void print_expected(int num, T ret, T expected)
 }
 
 template <typename T>
-void print_expected(int num, vector<T> ret, vector<T> expected)
+void print_expected(int num, const vector<T> &ret, const vector<T> &expected)
 {
     cout << "LeetCode " << num << ": ";
     if (ret == expected)
@@ -323,7 +330,7 @@ void print_expected(T ret, T expected)
 ****************************************************************
 */
 template <typename T>
-vector<size_t> sort_indexes(vector<T> &v)
+vector<size_t> sort_indexes(const vector<T> &v)
 {
     vector<size_t> idx(v.size());
     iota(idx.begin(), idx.end(), 0);
@@ -361,7 +368,7 @@ bool isDigit(char c)
 左开右闭
  */
 template <typename T>
-T vector_sumrange(vector<T> arr, int begin, int end)
+T vector_sumrange(const vector<T> &arr, int begin, int end)
 {
     int len = arr.size();
     T ret = 0;

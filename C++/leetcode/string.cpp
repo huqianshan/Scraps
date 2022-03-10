@@ -191,7 +191,20 @@ int lengthOfLongestSubstring2(string s)
 }
 
 /*
-
+*********************************
+*****        回文子串       *****
+*********************************
+*/
+pair<int, int> expand_center(int begin, int end, string s, int size)
+{
+    while (begin >= 0 && end < size && s[begin] == s[end])
+    {
+        begin--;
+        end++;
+    }
+    return {begin + 1, end - 1};
+}
+/*
 5. 最长回文子串
 给你一个字符串 s，找到 s 中最长的回文子串。
 
@@ -200,14 +213,158 @@ int lengthOfLongestSubstring2(string s)
  */
 string longestPalindrome(string s)
 {
+    int len = s.size();
+    int begin = 0;
+    int end = 0;
+    for (int i = 0; i < len; i++)
+    {
+        auto [l1, r1] = expand_center(i, i, s, len);
+        auto [l2, r2] = expand_center(i, i + 1, s, len);
+
+        if (r1 - l1 > end - begin)
+        {
+            begin = l1;
+            end = r1;
+        }
+
+        if (r2 - l2 > end - begin)
+        {
+            begin = l2;
+            end = r2;
+        }
+    }
+    return s.substr(begin, end - begin + 1);
+}
+
+/*
+125. 验证回文串
+给定一个字符串，验证它是否是回文串，只考虑字母和数字字符，可以忽略字母的大小写。
+
+说明：本题中，我们将空字符串定义为有效的回文串。
+ */
+bool isPalindrome(string s)
+{
+    int len = s.size();
     int left = 0;
-    int right = s.size();
+    int right = len - 1;
     while (left < right)
     {
-
-        left++;
+        while (left < right && !isalnum(s[left]))
+        {
+            left++;
+        }
+        while (left < right && !isalnum(s[right]))
+        {
+            right--;
+        }
+        if (left < right)
+        {
+            if (tolower(s[left]) != tolower(s[right]))
+            {
+                return false;
+            }
+            left++;
+            right--;
+            printf("%c %c\n", s[left], s[right]);
+        }
     }
-    return string();
+    return true;
+}
+
+/*647. 回文子串
+给你一个字符串 s ，请你统计并返回这个字符串中 回文子串 的数目。
+
+回文字符串 是正着读和倒过来读一样的字符串。
+
+子字符串 是字符串中的由连续字符组成的一个序列。
+
+具有不同开始位置或结束位置的子串，即使是由相同的字符组成，也会被视作不同的子串。
+
+方法一: 暴力 No
+方法二： dp
+方法三： 中心拓展
+
+*/
+int countSubstrings(string s)
+{
+    int len = s.size();
+    int count = 0;
+    for (int i = 0; i < len; i++)
+    {
+        for (int j = 0; j < 2; j++)
+        {
+            int start = i;
+            int end = i + j;
+            while (start >= 0 && end < len && s[start] == s[end])
+            {
+                start--;
+                end++;
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+int countSubstrings_dp(string s)
+{
+    int len = s.size();
+    vector<vector<int>> dp(len, vector<int>(len, 0));
+    int count = 0;
+
+    for (int i = len - 1; i >= 0; i--)
+    {
+        for (int j = i; j < len; j++)
+        {
+            if (s[i] == s[j])
+            {
+                if (j - i <= 1)
+                {
+                    count++;
+                    dp[i][j] = 1;
+                }
+                else if (dp[i + 1][j - 1])
+                {
+                    count++;
+                    dp[i][j] = 1;
+                }
+            }
+        }
+    }
+    return count;
+}
+
+bool checkPalindrome(string s, int start, int end)
+{
+    for (; start < end; start++, end--)
+    {
+        if (s[start] != s[end])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+/*
+680. 验证回文字符串 Ⅱ
+给定一个非空字符串 s，最多删除一个字符。判断是否能成为回文字符串
+
+s思路： 两次遍历，涉及两个变量，使用for-loop更优一点
+ */
+bool validPalindrome(string s)
+{
+    int len = s.size();
+    int left = 0;
+    int right = len - 1;
+    for (; left < right && s[left] == s[right]; left++, right--)
+    {
+    }
+    return left >= right || checkPalindrome(s, left + 1, right) || checkPalindrome(s, left, right--);
+}
+void test_palindrome()
+{
+    string s = "test test";
+    print_expected(33, isPalindrome(s), false);
 }
 
 vector<int> computePrefix(const string needle)
@@ -356,6 +513,12 @@ void test_match()
 }
 
 /*
+*********************************
+*****       Agrams          *****
+*********************************
+*/
+
+/*
 49. 字母异位词分组
 给你一个字符串数组，请你将 字母异位词 组合在一起。可以按任意顺序返回结果列表。
 
@@ -445,7 +608,7 @@ bool isAnagram(string s, string t)
 
 异位词 指由相同字母重排列形成的字符串（包括相同的字符串）
 */
-vector<int> findAnagrams(string s, string p)
+vector<int> findAnagrams1(string s, string p)
 {
     unordered_map<char, int> occ;
     for (auto c : p)
@@ -486,6 +649,191 @@ vector<int> findAnagrams(string s, string p)
         right++;
     }
     return ans;
+}
+
+vector<int> findAnagrams(string s, string p)
+{
+    int sLen = s.size(), pLen = p.size();
+
+    if (sLen < pLen)
+    {
+        return vector<int>();
+    }
+
+    vector<int> ans;
+    vector<int> sCount(26);
+    vector<int> pCount(26);
+    for (int i = 0; i < pLen; ++i)
+    {
+        ++sCount[s[i] - 'a'];
+        ++pCount[p[i] - 'a'];
+    }
+
+    if (sCount == pCount)
+    {
+        ans.emplace_back(0);
+    }
+
+    for (int i = 0; i < sLen - pLen; ++i)
+    {
+        --sCount[s[i] - 'a'];
+        ++sCount[s[i + pLen] - 'a'];
+
+        if (sCount == pCount)
+        {
+            ans.emplace_back(i + 1);
+        }
+    }
+
+    return ans;
+}
+/*
+567. 字符串的排列
+给你两个字符串 s1 和 s2 ，写一个函数来判断 s2 是否包含 s1 的排列。如果是，返回 true ；否则，返回 false 。
+
+换句话说，s1 的排列之一是 s2 的 子串 。
+
+优化思路： 不需要比较整个子串，根据一进一出；只需要比较增量值
+ */
+bool checkInclusion(string s1, string s2)
+{
+    // unordered_map<char, int> occ1;
+    vector<int> occ1(26, 0);
+    for (auto c : s1)
+    {
+        occ1[c - 'a']++;
+    }
+
+    int alen = s1.size();
+    int blen = s2.size();
+    if (alen > blen)
+    {
+        return false;
+    }
+    // unordered_map<char, int> occ(occ1);
+    vector<int> occ(occ1);
+    for (int i = 0; i <= blen - alen; i++)
+    {
+
+        int count = 0;
+        for (int j = 0; j < alen; j++)
+        { // 第一个不匹配就直接跳过
+            if (occ[s2[i + j]] == 0)
+            {
+                break;
+            }
+            else if (occ[s2[i + j]] != 0)
+            { // 如果重复char 需要比较多次
+                count++;
+                occ[s2[i + j]]--;
+            }
+        }
+        if (count == alen)
+        {
+            return true;
+        }
+        else
+        {
+            occ = occ1;
+        }
+    }
+    return false;
+}
+
+bool checkInclusion2(string s1, string s2)
+{
+    string base = s1;
+    sort(base.begin(), base.end());
+
+    int blen = s2.size();
+    int alen = s1.size();
+    for (int i = 0; i < blen - alen; i++)
+    {
+        string target = s2.substr(i, alen);
+        sort(target.begin(), target.end());
+        if (target == base)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool checkInclusion3(string s1, string s2)
+{
+    unordered_map<char, int> occ1;
+    for (auto c : s1)
+    {
+        occ1[c]++;
+    }
+
+    int alen = s1.size();
+    int blen = s2.size();
+    if (alen != blen)
+    {
+        return false;
+    }
+    unordered_map<char, int> occ(occ1);
+    for (int i = 0; i <= blen - alen; i++)
+    {
+
+        int count = 0;
+
+        if (occ.find(s2[i]) == occ.end())
+        { // 第一个不匹配就直接跳过
+            continue;
+        }
+        for (int j = 0; j < alen; j++)
+        {
+            if (occ.find(s2[i + j]) == occ.end())
+            {
+                break;
+            }
+            else if (occ[s2[i + j]] != 0)
+            { // 如果重复char 需要比较多次
+                count++;
+                occ[s2[i + j]]--;
+            }
+        }
+        if (count == alen)
+        {
+            return true;
+        }
+        else
+        {
+            occ = occ1;
+        }
+    }
+    return false;
+}
+
+bool checkInclusion4(string s1, string s2)
+{
+    int n = s1.length(), m = s2.length();
+    if (n > m)
+    {
+        return false;
+    }
+    vector<int> cnt1(26), cnt2(26);
+    for (int i = 0; i < n; ++i)
+    {
+        ++cnt1[s1[i] - 'a'];
+        ++cnt2[s2[i] - 'a'];
+    }
+    if (cnt1 == cnt2)
+    {
+        return true;
+    }
+    for (int i = n; i < m; ++i)
+    {
+        ++cnt2[s2[i] - 'a'];
+        --cnt2[s2[i - n] - 'a'];
+        if (cnt1 == cnt2)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 /*
@@ -549,7 +897,23 @@ string minWindow(string s, string t)
     }
     return max_len == INT_MAX ? string() : s.substr(start, max_len);
 }
-
+void test_minWindow_76()
+{
+    string s = "cbaebabacd";
+    string t = "abc";
+    // cout << countSubstrings(t) << endl;
+    /*    print_vector(findAnagrams(s, t));
+       s = "abab";
+       t = "ab";
+       print_vector(findAnagrams(s, t));
+       s = "baa";
+       t = "aa";
+       print_vector(findAnagrams(s, t));
+       s = "abaacbabc";
+       t = "abc";
+       print_vector(findAnagrams(s, t));
+       // cout << countSubstrings(t) << endl; */
+}
 /*
 151. 翻转字符串里的单词
 给你一个字符串 s ，逐个翻转字符串中的所有 单词 。
@@ -708,162 +1072,207 @@ void test_reverse()
     ret_expected = "bob like even not does Alice";
     print_expected(151, reverseWords(s), ret_expected);
 }
+/*
+*********************************
+*****  big Int String       *****
+*********************************
+*/
+/*
+    计算 m mm mmm ，共n次之和
+ */
+string cal_arr(int m, int n)
+{
+    int base = 10;
+    int cur = 0;
+    int plus = 0;
+    string ret;
+    while (n != 0)
+    {
+        cur = n * m + plus;
+        plus = cur / base;
+        ret.push_back('0' + cur % 10);
+        n--;
+    }
+    reverse(ret.begin(), ret.end());
+    return ret;
+}
 
 /*
-567. 字符串的排列
-给你两个字符串 s1 和 s2 ，写一个函数来判断 s2 是否包含 s1 的排列。如果是，返回 true ；否则，返回 false 。
+415. 字符串相加
+给定两个字符串形式的非负整数 num1 和num2 ，计算它们的和并同样以字符串形式返回。
 
-换句话说，s1 的排列之一是 s2 的 子串 。
-
-优化思路： 不需要比较整个子串，根据一进一出；只需要比较增量值
+你不能使用任何內建的用于处理大整数的库（比如 BigInteger）， 也不能直接将输入的字符串转换为整数形式。
  */
-bool checkInclusion(string s1, string s2)
+string addStrings(string num1, string num2)
 {
-    // unordered_map<char, int> occ1;
-    vector<int> occ1(26, 0);
-    for (auto c : s1)
+    string ret;
+    int len1 = num1.size() - 1;
+    int len2 = num2.size() - 1;
+    int tem = 0;
+    int carry = 0;
+    int base = 10;
+    while (len1 >= 0 || len2 >= 0 || carry > 0)
     {
-        occ1[c - 'a']++;
+        int x = (len1 >= 0) ? num1[len1] - '0' : 0;
+        int y = (len2 >= 0) ? num2[len2] - '0' : 0;
+        tem = x + y + carry;
+        carry = tem / base;
+        // printf("%d %d\n", x, y);
+        ret.push_back(tem % base + '0');
+        len1--;
+        len2--;
     }
-
-    int alen = s1.size();
-    int blen = s2.size();
-    if (alen > blen)
-    {
-        return false;
-    }
-    // unordered_map<char, int> occ(occ1);
-    vector<int> occ(occ1);
-    for (int i = 0; i <= blen - alen; i++)
-    {
-
-        int count = 0;
-        for (int j = 0; j < alen; j++)
-        { // 第一个不匹配就直接跳过
-            if (occ[s2[i + j]] == 0)
-            {
-                break;
-            }
-            else if (occ[s2[i + j]] != 0)
-            { // 如果重复char 需要比较多次
-                count++;
-                occ[s2[i + j]]--;
-            }
-        }
-        if (count == alen)
-        {
-            return true;
-        }
-        else
-        {
-            occ = occ1;
-        }
-    }
-    return false;
+    reverse(ret.begin(), ret.end());
+    return ret;
 }
 
-bool checkInclusion2(string s1, string s2)
-{
-    string base = s1;
-    sort(base.begin(), base.end());
+/*
+445. 两数相加 II
+给你两个 非空 链表来代表两个非负整数。数字最高位位于链表开始位置。它们的每个节点只存储一位数字。将这两数相加会返回一个新的链表。
 
-    int blen = s2.size();
-    int alen = s1.size();
-    for (int i = 0; i < blen - alen; i++)
+你可以假设除了数字 0 之外，这两个数字都不会以零开头。
+ */
+ListNode *addTwoNumbers(ListNode *l1, ListNode *l2)
+{
+    stack<int> s1, s2;
+    while (l1)
     {
-        string target = s2.substr(i, alen);
-        sort(target.begin(), target.end());
-        if (target == base)
-        {
-            return true;
-        }
+        s1.push(l1->val);
+        l1 = l1->next;
     }
-    return false;
+    while (l2)
+    {
+        s2.push(l2->val);
+        l2 = l2->next;
+    }
+    int carry = 0;
+    ListNode *ans = nullptr;
+    while (!s1.empty() or !s2.empty() or carry != 0)
+    {
+        int a = s1.empty() ? 0 : s1.top();
+        int b = s2.empty() ? 0 : s2.top();
+        if (!s1.empty())
+            s1.pop();
+        if (!s2.empty())
+            s2.pop();
+        int cur = a + b + carry;
+        carry = cur / 10;
+        cur %= 10;
+        auto curnode = new ListNode(cur);
+        curnode->next = ans;
+        ans = curnode;
+    }
+    return ans;
 }
 
-bool checkInclusion3(string s1, string s2)
+// k is a char
+string single_multiply(char k, string nums)
 {
-    unordered_map<char, int> occ1;
-    for (auto c : s1)
+    int base = 10;
+    int cur = 0;
+    int carry = 0;
+    int len = nums.size() - 1;
+    int x = k - '0'; // 转换为int
+    string ret;
+    while (len >= 0 || carry != 0)
     {
-        occ1[c]++;
+        int tem = (len >= 0) ? nums[len] - '0' : 0;
+        cur = x * tem + carry;
+        carry = cur / base;
+        ret.push_back(cur % base + '0');
+        len--;
     }
+    reverse(ret.begin(), ret.end());
+    return ret;
+}
 
-    int alen = s1.size();
-    int blen = s2.size();
-    if (alen != blen)
+/*
+43. 字符串相乘
+给定两个以字符串形式表示的非负整数 num1 和 num2，返回 num1 和 num2 的乘积，它们的乘积也表示为字符串形式。
+
+注意：不能使用任何内置的 BigInteger 库或直接将输入转换为整数。
+
+方法一： 直接模拟
+方法二： 构造数组，填充对应位
+方法三： 傅里叶变换 卷积
+ */
+string multiply(string num1, string num2)
+{
+    if (num1[0] == '0' || num2[0] == '0')
     {
-        return false;
+        return {'0'};
     }
-    unordered_map<char, int> occ(occ1);
-    for (int i = 0; i <= blen - alen; i++)
+    string ret;
+    int len1 = num1.size() - 1;
+    int len2 = num2.size() - 1;
+    for (int i = len1; i >= 0; i--)
     {
+        string tem = single_multiply(num1[i], num2);
+        for (int j = i; j < len1; j++)
+        {
+            tem.push_back('0');
+        }
+        // cout << "" << tem << "" << endl;
+        ret = addStrings(tem, ret);
+    }
+    return ret;
+}
 
-        int count = 0;
+void test_bigint()
+{
+    string a = "123";
+    string b = "111";
+    string ret_expected = "444";
+    print_expected(multiply(a, b), ret_expected);
 
-        if (occ.find(s2[i]) == occ.end())
-        { // 第一个不匹配就直接跳过
+    a = "9";
+    b = "111";
+    ret_expected = "9";
+    print_expected(multiply(a, b), ret_expected);
+
+    a = "0";
+    b = "9999";
+    ret_expected = "10008";
+    print_expected(multiply(a, b), ret_expected);
+
+    a = "9";
+    b = "123";
+    ret_expected = "132";
+    print_expected(multiply(a, b), ret_expected);
+
+    cout << "" << single_multiply(a[0], b) << "" << endl;
+}
+int compareVersion(string version1, string version2)
+{
+    int left = 0;
+    int right = 0;
+    int len1 = version1.size();
+    int len2 = version2.size();
+    while (left < len1 || right < len2)
+    {
+        int x = 0;
+        while (left < len1 && version1[left] != '.')
+        {
+            x = x * 10 + (version1[left++] - '0');
+        }
+        left++;
+        int y = 0;
+        while (right < len2 && version2[right] != '.')
+        {
+            y = y * 10 + (version2[right++] - '0');
+        }
+        right++;
+        if (x == y)
+        {
             continue;
         }
-        for (int j = 0; j < alen; j++)
-        {
-            if (occ.find(s2[i + j]) == occ.end())
-            {
-                break;
-            }
-            else if (occ[s2[i + j]] != 0)
-            { // 如果重复char 需要比较多次
-                count++;
-                occ[s2[i + j]]--;
-            }
-        }
-        if (count == alen)
-        {
-            return true;
-        }
         else
         {
-            occ = occ1;
+            // cout<<x<<" "<<y<<endl;
+            return (x < y) ? -1 : 1;
         }
     }
-    return false;
-}
-
-/*647. 回文子串
-        给你一个字符串 s ，请你统计并返回这个字符串中 回文子串 的数目。
-
-    回文字符串 是正着读和倒过来读一样的字符串。
-
-    子字符串 是字符串中的由连续字符组成的一个序列。
-
-    具有不同开始位置或结束位置的子串，即使是由相同的字符组成，也会被视作不同的子串。
-*/
-int countSubstrings(string s)
-{
-    int len = s.size();
-    vector<vector<int>> dp(len, vector<int>(len, 0));
-    int count = 0;
-
-    for (int i = len - 1; i >= 0; i--)
-    {
-        for (int j = i; j < len; j++)
-        {
-            if (s[i] == s[j])
-            {
-                if (j - i <= 1)
-                {
-                    count++;
-                    dp[i][j] = 1;
-                }
-                else if (dp[i + 1][j - 1])
-                {
-                    count++;
-                    dp[i][j] = 1;
-                }
-            }
-        }
-    }
-    return count;
+    return 0;
 }
 
 /*
@@ -886,11 +1295,17 @@ void test_all()
 {
     // test_offer();
     // test_reverse();
-    test_match();
+    // test_match();
+    // test_bigint();
+    test_palindrome();
 }
 
 int main(int argc, char const *argv[])
 {
     test_all();
+    /* string s = "123456";
+    cout << "" << s.substr(1, 3) << "" << endl; */
+    cout << "String Test"
+         << " Finished" << endl;
     return 0;
 }

@@ -119,6 +119,10 @@ alias checkout="git checkout"
 alias log="git log --graph"
 alias branch="git branch -a"
 
+# linux command
+alias la="ls -ah"
+alias ll="ls -lh"
+
 # for anaconda python
 # export PATH="/home/hjl/anaconda3/bin:$PATH"
 export PATH="/home/hjl/.local/bin:$PATH"

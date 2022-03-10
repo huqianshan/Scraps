@@ -28,7 +28,18 @@ ListNode *getKthFromEnd(ListNode *head, int k)
     return p1;
 }
 
-ListNode *reverseList(ListNode *head)
+/*
+92. 反转链表 II
+给你单链表的头指针 head 和两个整数 left 和 right ，其中 left <= right 。
+请你反转从位置 left 到位置 right 的链表节点，返回 反转后的链表 。
+*/
+q
+    /*
+    206. 反转链表
+    给你单链表的头节点 head ，请你反转链表，并返回反转后的链表。
+     */
+    ListNode *
+    reverseList(ListNode *head)
 {
     ListNode *pre = nullptr;
     ListNode *cur = head;
@@ -55,6 +66,7 @@ ListNode *reverseList_recur(ListNode *head)
     head->next = nullptr; // 确保首节点，被置为空，在下一次递归返回时，被上面一条语句修改
     return newHead;
 }
+
 /*
 19. 删除链表的倒数第 N 个结点
 给你一个链表，删除链表的倒数第 n 个结点，并且返回链表的头结点。
@@ -81,10 +93,58 @@ ListNode *removeNthFromEnd(ListNode *head, int n)
 }
 
 /*
+21. 合并两个有序链表
+将两个升序链表合并为一个新的 升序 链表并返回。新链表是通过拼接给定的两个链表的所有节点组成的。
+ */
+ListNode *mergeTwoLists(ListNode *l1, ListNode *l2)
+{
+    ListNode *retNode = new ListNode(INT_MIN, nullptr);
+    ListNode *storeNode = retNode;
+    while (l1 != nullptr && l2 != nullptr)
+    {
+        if (l1->val < l2->val)
+        {
+            retNode->next = l1;
+            l1 = l1->next;
+        }
+        else
+        {
+            retNode->next = l2;
+            l2 = l2->next;
+        }
+        retNode = retNode->next;
+    }
+    retNode->next = (l1 == nullptr) ? l2 : l1;
+    return storeNode->next;
+}
+
+/*
+23. 合并K个升序链表
+给你一个链表数组，每个链表都已经按升序排列。
+
+请你将所有链表合并到一个升序链表中，返回合并后的链表。
+*/
+ListNode *merge(vector<ListNode *> &lists, int l, int r)
+{
+    if (l == r)
+        return lists[l];
+    if (l > r)
+        return nullptr;
+    int mid = (l + r) >> 1;
+    return mergeTwoLists(merge(lists, l, mid), merge(lists, mid + 1, r));
+}
+
+ListNode *mergeKLists(vector<ListNode *> &lists)
+{
+    return merge(lists, 0, lists.size() - 1);
+}
+
+/*
 24. 两两交换链表中的节点
 给你一个链表，两两交换其中相邻的节点，并返回交换后链表的头节点。你必须在不修改节点内部的值的情况下完成本题（即，只能进行节点交换）
  */
-ListNode *swapPairs(ListNode *head)
+ListNode *
+swapPairs(ListNode *head)
 {
     // 1. 递归基
     if (head == nullptr || head->next == nullptr)
@@ -110,7 +170,7 @@ k 是一个正整数，它的值小于或等于链表的长度。
 你可以设计一个只使用常数额外空间的算法来解决此问题吗？
 你不能只是单纯的改变节点内部的值，而是需要实际进行节点交换
  */
-ListNode *reverseKGroup(ListNode *head, int k)
+ListNode *reverseKGroup2(ListNode *head, int k)
 {
     ListNode *dummyHead = new ListNode(0, head);
     ListNode *slow = head;
@@ -143,66 +203,156 @@ ListNode *reverseKGroup(ListNode *head, int k)
     return dummyHead->next;
 }
 
-void test_24()
+/*
+return {head,tail}
+ */
+pair<ListNode *, ListNode *> reverseListTwo(ListNode *head)
 {
-    string s = "[1,2,3,4,5]";
-    ListNode *head = stringToListNode(s);
-    printf_node(reverseKGroup(head, 1));
+    ListNode *dummyNode = head;
+    ListNode *prev = nullptr;
+    ListNode *cur = head;
+    ListNode *next = nullptr;
+    while (cur != nullptr)
+    {
+        next = cur->next;
+        cur->next = prev;
+        prev = cur;
 
-    head = stringToListNode(s);
-    printf_node(reverseKGroup(head, 2));
-
-    head = stringToListNode(s);
-    printf_node(reverseKGroup(head, 3));
-
-    head = stringToListNode(s);
-    printf_node(reverseKGroup(head, 4));
+        cur = next;
+    }
+    return {prev, dummyNode};
 }
-Node *copyRandomList(Node *head)
-{
-    if (!head)
-    {
-        return NULL;
-    }
-    Node *raw_head = head;
-    Node *tem_node = NULL;
-    Node *new_list = NULL;
-    // copy node in list
-    while (head)
-    {
-        tem_node = new Node(head->val);
-        tem_node->next = head->next;
-        head->next = tem_node;
-        // iter to next raw_list node
-        head = tem_node->next;
-    }
-    // printf_node(raw_head)
-    head = raw_head;
 
-    // change random pointer in new_list
-    while (head)
+/*
+*********************************
+*****        ${1:Fun}       *****
+*********************************
+*/
+
+ListNode *reverseKGroup3(ListNode *head, int k)
+{
+    ListNode *dummyHead = new ListNode(-1, head);
+    ListNode *prev = dummyHead;
+    ListNode *cur = dummyHead->next;
+    ListNode *next = nullptr;
+
+    int n = 1;
+    while (cur != nullptr)
     {
-        /*   new_list = head->next;
-        if (head->random)
+        if (n % k == 0)
         {
-            new_list->random = head->random->next;
+            next = cur->next;
+            cur->next = nullptr;
+            auto [hair, tail] = reverseListTwo(prev->next);
+
+            // 绑定反转的链表
+            prev->next = hair;
+            tail->next = next;
+
+            prev = tail;
+            cur = tail;
         }
-        head = new_list->next; */
+        // printf("%d \n", cur->val);
+        cur = cur->next;
+        n++;
     }
-    // printf_node(raw_head);
-    head = raw_head;
-    tem_node = head->next;
-    while (head)
+    return dummyHead->next;
+}
+
+/* 剩下的不足k个也翻转 */
+ListNode *reverseKGroup(ListNode *head, int k)
+{
+    ListNode *dummyHead = new ListNode(-1, head);
+    ListNode *prev = dummyHead;
+    ListNode *cur = dummyHead->next;
+    ListNode *next = nullptr;
+
+    int n = 1;
+    while (cur != nullptr)
     {
-        new_list = head->next;
-        head->next = new_list->next;
-        head = head->next;
-        if (head)
+        if (n % k == 0)
         {
-            new_list->next = head->next;
+            next = cur->next;
+            cur->next = nullptr;
+            auto [hair, tail] = reverseListTwo(prev->next);
+
+            // 绑定反转的链表
+            prev->next = hair;
+            tail->next = next;
+
+            prev = tail;
+            cur = tail;
         }
+        // printf("%d \n", cur->val);
+        cur = cur->next;
+        n++;
     }
-    return tem_node;
+    if (prev->next != nullptr)
+    {
+        auto [hair, tail] = reverseListTwo(prev->next);
+        prev->next = hair;
+    }
+    return dummyHead->next;
+}
+
+/*
+86. 分隔链表
+给你一个链表的头节点 head 和一个特定值 x ，请你对链表进行分隔，
+使得所有 小于 x 的节点都出现在 大于或等于 x 的节点之前。
+
+你应当 保留 两个分区中每个节点的初始相对位置。
+ */
+ListNode *partition(ListNode *head, int x)
+{
+    ListNode *biggerHead = new ListNode(-1, nullptr);
+    ListNode *smallHead = new ListNode(-1, head);
+    ListNode *biggerCur = biggerHead;
+    ListNode *cur = smallHead;
+    ListNode *nxt = nullptr;
+    while (cur != nullptr && cur->next != nullptr)
+    {
+        nxt = cur->next;
+        if (nxt->val >= x)
+        { // delete node
+            cur->next = nxt->next;
+            // add to bigger list
+            biggerCur->next = nxt;
+            biggerCur = biggerCur->next;
+            nxt->next = nullptr;
+            continue; // 继续检测下一个元素是否需要跳过 关键
+        }
+        cur = cur->next;
+        // nxt = cur->next;
+    }
+    // printf_node(smallHead->next);
+    // printf_node(biggerHead->next);
+    //
+    // if (cur == nullptr)
+    // {
+    //     smallHead->next = biggerHead->next;
+    // }
+    // else
+    {
+        cur->next = biggerHead->next;
+    }
+    return smallHead->next;
+}
+
+void test_reverse()
+{
+    string s = "[1,4,3,5,7,2,5,2]";
+    ListNode *head = stringToListNode(s);
+    /*  printf_node(reverseKGroup(head, 1));
+
+     head = stringToListNode(s);
+     printf_node(reverseKGroup(head, 2));
+
+     head = stringToListNode(s);
+     printf_node(reverseKGroup(head, 3));
+
+     head = stringToListNode(s);
+     printf_node(reverseKGroup(head, 4)); */
+    printf_node(partition(head, 3));
 }
 
 // https : //leetcode-cn.com/problems/diao-zheng-shu-zu-shun-xu-shi-qi-shu-wei-yu-ou-shu-qian-mian-lcof/
@@ -237,6 +387,85 @@ ListNode *addTwoNumbers(ListNode *l1, ListNode *l2)
     return head;
 }
 
+/*138. 复制带随机指针的链表  */
+Node *copyRandomList(Node *head)
+{
+    if (head == nullptr)
+        return head;
+
+    //遍历原链表 创建新链表节点并建立映射关系
+    unordered_map<Node *, Node *> map; //<原链表节点，对应位置的新链表节点>
+
+    Node *cur = head;
+    while (cur)
+    {
+        map[cur] = new Node(cur->val);
+        cur = cur->next;
+    }
+
+    //遍历原链表 根据map链接新链表
+    cur = head;
+    while (cur)
+    {
+        Node *node = map[cur];
+        node->next = map[cur->next];
+        // node->random = map[cur->random];
+        cur = cur->next;
+    }
+
+    return map[head];
+}
+
+/*   复制原结点  */
+Node *copyRandomList2(Node *head)
+{
+    if (!head)
+    {
+        return NULL;
+    }
+    Node *raw_head = head;
+    Node *tem_node = NULL;
+    Node *new_list = NULL;
+    // copy node in list
+    while (head)
+    {
+        tem_node = new Node(head->val);
+        tem_node->next = head->next;
+        head->next = tem_node;
+
+        // iter to next raw_list node
+        head = tem_node->next;
+    }
+    // printf_node(raw_head);
+    head = raw_head;
+
+    // change random pointer in new_list
+    while (head)
+    {
+        new_list = head->next;
+        // if (head->random)
+        {
+            // new_list->random = head->random->next;
+            // }
+            head = new_list->next;
+        }
+        // printf_node(raw_head);
+        head = raw_head;
+        tem_node = head->next;
+        while (head)
+        {
+            new_list = head->next;
+            head->next = new_list->next;
+            head = head->next;
+            if (head)
+            {
+                new_list->next = head->next;
+            }
+        }
+        // printf_node(raw_head->next);
+        return tem_node;
+    }
+}
 /*
 141. 环形链表
 给你一个链表的头节点 head ，判断链表中是否有环。
@@ -476,6 +705,47 @@ ListNode *insertionSortList(ListNode *head)
     return dummyHead->next;
 }
 
+ListNode *split(ListNode *head)
+{
+    if (head == nullptr)
+    {
+        return head;
+    }
+    ListNode *slow = head;
+    ListNode *fast = head->next;
+    while (fast != nullptr && fast->next != nullptr)
+    {
+        fast = fast->next->next;
+        slow = slow->next;
+    }
+    ListNode *tem = slow->next;
+    slow->next = nullptr;
+    return tem;
+}
+
+ListNode *merge(ListNode *start, ListNode *middle)
+{
+    ListNode *dummyNode = new ListNode(0, nullptr);
+    ListNode *cur = dummyNode;
+    while (start != nullptr && middle != nullptr)
+    {
+        if (start->val < middle->val)
+        {
+            cur->next = start;
+            start = start->next;
+        }
+        else
+        {
+            cur->next = middle;
+            middle = middle->next;
+        }
+        cur = cur->next;
+    }
+    // 收尾工作
+    cur->next = (start == nullptr) ? middle : start;
+    return dummyNode->next;
+}
+
 /*
 148. 排序链表
 给你链表的头结点 head ，请将其按 升序 排列并返回 排序后的链表 。
@@ -483,10 +753,21 @@ ListNode *insertionSortList(ListNode *head)
 进阶：
 
 你可以在 O(n log n) 时间复杂度和常数级空间复杂度下，对链表进行排序吗
+
+思路：递归排序
  */
 ListNode *sortList(ListNode *head)
 {
-    return insertionSortList(head);
+    if (head == nullptr || head->next == nullptr)
+    {
+        return head;
+    }
+    ListNode *begin = head;
+    ListNode *middle = split(head);
+
+    begin = sortList(begin);
+    middle = sortList(middle);
+    return merge(begin, middle);
 }
 
 /*
@@ -494,6 +775,22 @@ ListNode *sortList(ListNode *head)
 给你两个单链表的头节点 headA 和 headB ，请你找出并返回两个单链表相交的起始节点。如果两个链表不存在相交节点，返回 null 。
  */
 ListNode *getIntersectionNode(ListNode *headA, ListNode *headB)
+{
+    if (headA == nullptr || headB == nullptr)
+    {
+        return nullptr;
+    }
+
+    ListNode *pa = headA, *pb = headB;
+    while (pa != pb)
+    {
+        pa = (pa == nullptr) ? headB : pa->next;
+        pb = (pb == nullptr) ? headA : pb->next;
+    }
+    return pa;
+}
+
+ListNode *getIntersectionNode2(ListNode *headA, ListNode *headB)
 {
     int t1 = 0, t2 = 0;   // t1为A链表的个数，t2为B链表的个数
     ListNode *p1 = headA; //指针1
@@ -592,8 +889,11 @@ void test_list()
 {
 
     string s = "[5,4,3,1,2]";
-    ListNode *head = stringToListNode(s);
-    test_24();
+    ListNode *begin = stringToListNode(s);
+    auto [head, tail] = reverseListTwo(begin);
+    // printf_node(head);
+    // printf_node(tail);
+    test_reverse();
 }
 
 void test_lru()

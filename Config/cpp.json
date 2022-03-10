@@ -49,5 +49,9 @@
     "vector_int": {
         "prefix": "veci",
         "body": "vector<int> nums${0};"
+    },
+    "Seperate Char": {
+        "prefix": "sep",
+        "body": "/*\n*********************************\n*****        ${1:Fun}       *****\n*********************************\n*/"
     }
 }

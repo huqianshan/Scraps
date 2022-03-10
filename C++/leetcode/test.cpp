@@ -1,16 +1,20 @@
-#include <iostream>
+#include "helper.h"
 using namespace std;
 
 int main(int argc, char const *argv[])
 {
 
-    string s;
-    int n = 0;
-    while (cin >> s)
+    int m;
+    int n;
+    string ret;
+    while (cin >> m >> n)
     {
-        printf("%d ", n++);
-        cout << s << endl;
+        // ret = cal_arr(m, n);
+        cout << ret << endl;
     }
+
+    //
+
     /* code */
     return 0;
 }

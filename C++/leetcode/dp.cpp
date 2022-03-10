@@ -1,9 +1,18 @@
+/**
+ * @file dp.cpp
+ * @author hjl-N501 (1196455147@qq.com)
+ * @brief leetcode dp.cpp
+ * @version 0.1
+ * @date 2022-03-08
+ *
+ * @copyright Copyright (c) 2022
+ *
+ */
 #include "helper.h"
 
 /*
  最大和的连续子数组
  */
-
 vector<int> maxSumArray(vector<int> &nums)
 {
     int len = nums.size();
@@ -17,7 +26,40 @@ vector<int> maxSumArray(vector<int> &nums)
     int end = 0;
     int tmp_begin = 0;
     int max_sum = nums[0];
-    for
+    for (int i = 1; i < len; i++)
+    {
+        // increase,左边数组大于零，增加
+        if (sum > 0)
+        {
+            sum += nums[i];
+        }
+        else
+        { // 小于零代表无共享，重新开始新数组
+            sum = nums[i];
+            tmp_begin = i;
+        }
+
+        if (sum > max_sum)
+        { // 如果大于最大值，更新下标
+            max_sum = sum;
+            begin = tmp_begin;
+            end = i;
+        }
+    }
+    return vector<int>{nums.begin() + begin, nums.begin() + end + 1}; // 左开右闭
+}
+void test_maxSum()
+{
+    vector<int> nums = {-2, 3, 4, -7, 1};
+    // nums = {1, 2, 3, 4, 5};
+    print_vector(vector<int>{nums.begin() + 1, nums.begin() + 3});
+    print_vector(std::move(maxSumArray(nums)));
+
+    nums = {-1, -2, -3, -4, 10, 1, -2, 4};
+    print_vector(maxSumArray(nums));
+
+    nums = {-11, 12, -13, 14, -2};
+    print_vector(maxSumArray(nums));
 }
 
 /*
@@ -244,6 +286,25 @@ int rob(vector<int> &nums)
     }
     return dp[len];
 }
+
+int rob_space(vector<int> &nums)
+{
+    int len = nums.size();
+    if (len <= 1)
+    {
+        return nums[0];
+    }
+    int dp0 = nums[0];
+    int dp1 = max(nums[0], nums[1]);
+    int tem = 0;
+    for (int i = 2; i < len; i++)
+    {
+        tem = dp1;
+        dp1 = max(dp0 + nums[i], dp1);
+        dp0 = tem;
+    }
+    return dp1;
+}
 /*
 213. 打家劫舍 II
 你是一个专业的小偷，计划偷窃沿街的房屋，每间房内都藏有一定的现金。
@@ -259,6 +320,10 @@ int rob2(vector<int> &nums)
     if (len < 1)
     {
         return len;
+    }
+    else if (len == 1)
+    {
+        return nums[len - 1];
     }
 
     vector<int> nums1(nums.begin() + 1, nums.end());
@@ -309,22 +374,59 @@ vector<vector<int>> level_travel(TreeNode *root)
     }
     return level;
 }
-int rob3(TreeNode *root)
-{
+int rob3_wrong(TreeNode *root)
+{ // [2,1,3,null,4] 层次计算是不行的
     vector<vector<int>> level = level_travel(root);
     int len = level.size();
-    if (len < 1)
+    if (len <= 1)
     {
-        return len;
+        return accumulate(level[0].begin(), level[0].end(), 0);
     }
-    vector<int> dp(len + 1);
-    dp[0] = 0;
-    dp[1] = accumulate(level[0].begin(), level[0].end(), 0);
-    for (int i = 1; i < len; i++)
+    int dp0 = accumulate(level[0].begin(), level[0].end(), 0);
+    int dp1 = max(accumulate(level[1].begin(), level[1].end(), 0), dp0);
+    int tem = 0;
+    for (int i = 2; i < len; i++)
     {
-        dp[i + 1] = max(dp[i], dp[i - 1] + accumulate(level[i].begin(), level[i].end(), 0));
+        tem = dp1;
+        dp1 = max(dp1, dp0 + accumulate(level[i].begin(), level[i].end(), 0));
+        dp0 = tem;
     }
-    return dp[len];
+    return dp1;
+}
+
+struct NodeStatus
+{
+    int select;
+    int not_select;
+};
+/**
+ * @brief
+ * @param root
+ * @return NodeStatus
+ */
+static NodeStatus dfs_node(TreeNode *root)
+{
+    if (root == nullptr)
+    {
+        return {0, 0};
+    }
+    NodeStatus left = dfs_node(root->left);
+    NodeStatus right = dfs_node(root->right);
+
+    int s = left.not_select + right.not_select + root->val;
+    int n = max(left.select, left.not_select) + max(right.select, right.not_select);
+    return {s, n};
+}
+/**
+ * @brief 分两种情况 选中、不选中
+ * @details o被选中时，左右孩子不能被选中；o不被选中时，左右子结点选中和不被选中的最大值
+ * @param root
+ * @return int
+ */
+int rob3(TreeNode *root)
+{
+    auto [sel, not_sel] = dfs_node(root);
+    return max(sel, not_sel);
 }
 
 /*
@@ -369,30 +471,6 @@ int maximalSquare(vector<vector<char>> &matrix)
         print_vector(n);
     }
     return big;
-}
-struct NodeStatus
-{
-    int select;
-    int not_select;
-};
-
-static NodeStatus dfs(TreeNode *root)
-{
-    if (root == nullptr)
-    {
-        return {0, 0};
-    }
-    NodeStatus left = dfs(root->left);
-    NodeStatus right = dfs(root->right);
-
-    int s = left.not_select + right.not_select + root->val;
-    int n = max(left.select, left.not_select) + max(right.select, right.not_select);
-    return {s, n};
-}
-int rob3_3(TreeNode *root)
-{
-    auto [sel, not_sel] = dfs(root);
-    return max(sel, not_sel);
 }
 
 /* 322. 零钱兑换
@@ -701,7 +779,8 @@ void test_all()
     // test_path();
     // test_intbiger();
     // test_bag();
-    test_coin();
+    // test_coin();
+    test_maxSum();
 }
 
 int main(int argc, char const *argv[])

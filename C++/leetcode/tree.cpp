@@ -655,11 +655,90 @@ binaryTreePaths(TreeNode *root)
     return {};
 }
 
+class Codec
+{
+public:
+    void rserialize(TreeNode *root, string &str)
+    {
+        if (root == nullptr)
+        {
+            str += "null,";
+        }
+        else
+        {
+            str += to_string(root->val) + ",";
+            rserialize(root->left, str);
+            rserialize(root->right, str);
+        }
+    }
+
+    string serialize(TreeNode *root)
+    {
+        string ret;
+        rserialize(root, ret);
+        return ret;
+    }
+
+    TreeNode *rdeserialize(list<string> &dataArray)
+    {
+        if (dataArray.front() == "null")
+        {
+            dataArray.erase(dataArray.begin());
+            return nullptr;
+        }
+
+        TreeNode *root = new TreeNode(stoi(dataArray.front()));
+        dataArray.erase(dataArray.begin());
+        root->left = rdeserialize(dataArray);
+        root->right = rdeserialize(dataArray);
+        cout << "List size" << dataArray.size() << "" << endl;
+        if (dataArray.size() == 0)
+        {
+            cout << "ok>?" << dataArray.front() << "" << endl;
+        }
+        return root;
+    }
+
+    TreeNode *deserialize(string data)
+    {
+        list<string> dataArray;
+        string str;
+        for (auto &ch : data)
+        {
+            if (ch == ',')
+            {
+                dataArray.push_back(str);
+                str.clear();
+            }
+            else
+            {
+                str.push_back(ch);
+            }
+        }
+        /*   if (!str.empty())
+          {
+              dataArray.push_back(str);
+              str.clear();
+          } */
+        return rdeserialize(dataArray);
+    }
+};
+
+void test_ser()
+{
+    string s = "[1,2,3]";
+    // s = "[3,9,20,null,null,15,7]";
+    TreeNode *root = stringToTreeNode(s);
+    Codec ser;
+    cout << "" << ser.serialize(root) << "" << endl;
+    cout << treeNodeToString(ser.deserialize(ser.serialize(root))) << "" << endl;
+    cout << "" << treeNodeToString(root) << "" << endl;
+}
+
 /*
 404. 左叶子之和
 计算给定二叉树的所有左叶子之和。
  */
-
 int sumOfLeftLeaves(TreeNode *root)
 {
     // 1. base
@@ -851,11 +930,33 @@ vector<double> averageOfLevels(TreeNode *root)
     return ret;
 }
 
+/*
+814. 二叉树剪枝
+给你二叉树的根结点 root ，此外树的每个结点的值要么是 0 ，要么是 1 。
+
+返回移除了所有不包含 1 的子树的原二叉树。
+
+节点 node 的子树为 node 本身加上所有 node 的后代。
+h后序遍历
+ */
+TreeNode *pruneTree(TreeNode *root)
+{
+    // 1. 递归基
+    if (root == nullptr)
+    {
+        return nullptr;
+    }
+    root->left = pruneTree(root->left);
+    root->right = pruneTree(root->right);
+    if (root->left == nullptr && root->right == nullptr && root->val == 0)
+    {
+        return nullptr;
+    }
+    return root;
+}
+
 void test_tree()
 {
-    string s = "[1,2,3,null,5]";
-    s = "[3,9,20,null,null,15,7]";
-    TreeNode *root = stringToTreeNode(s);
     // test_94();
     // test_102(root);
 
@@ -872,11 +973,17 @@ void test_tree()
     // traves_recur(root, "");
     // print_vector(path);
     // cout << sumOfLeftLeaves(root) << endl;
-    test_96();
+    // test_96();
+    // test_ser();
 }
 
 int main(int argc, char const *argv[])
 {
     test_tree();
+    int a = 1;
+    int b = 0;
+    // int c = (++(++a)) + (++a);
+    cout << "Ret " << a << " " << endl;
+
     return 0;
 }

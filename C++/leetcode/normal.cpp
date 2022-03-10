@@ -586,27 +586,6 @@ int majorityElement(vector<int> &nums)
 
 #define ABS(N) ((N < 0) ? (-N) : (N))
 
-void test_minWindow_76()
-{
-    string s = "cbaebabacd";
-    string t = "abc";
-    // cout << countSubstrings(t) << endl;
-    /*    print_vector(findAnagrams(s, t));
-       s = "abab";
-       t = "ab";
-       print_vector(findAnagrams(s, t));
-       s = "baa";
-       t = "aa";
-       print_vector(findAnagrams(s, t));
-       s = "abaacbabc";
-       t = "abc";
-       print_vector(findAnagrams(s, t));
-       // cout << countSubstrings(t) << endl; */
-}
-/*
-
-
-
 /*
 718. 最长重复子数组
 给两个整数数组 A 和 B ，返回两个数组中公共的、长度最长的子数组的长度
