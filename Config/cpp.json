@@ -9,6 +9,14 @@
         "prefix": "inc",
         "body": "#include <${1}>"
     },
+    "vector_int": {
+        "prefix": "veci",
+        "body": "vector<int> nums${0};"
+    },
+    "For Loop in CPP": {
+        "prefix": "fora",
+        "body": "for (auto &&${1:n}:${2:nums})\n{\n\t$0\n}"
+    },
     "#include \"\"": {
         "prefix": "inch",
         "body": "#include \"${1:helper}.h\""
@@ -21,10 +29,6 @@
     "For Loop": {
         "prefix": "for",
         "body": "for (int ${1:i} = 0; ${1:i} < ${2:len}; ${1:i}${3:++}) \n{\n\t$0\n}"
-    },
-    "For Loop in CPP": {
-        "prefix": "fora",
-        "body": "for (auto &&${1:n}:${2:nums})\n{\n\t$0\n}"
     },
     "While Loop": {
         "prefix": "while",
@@ -46,12 +50,16 @@
         "prefix": "test",
         "body": "void test_${1:512}(){\n\t${0};\n}"
     },
-    "vector_int": {
-        "prefix": "veci",
-        "body": "vector<int> nums${0};"
-    },
     "Seperate Char": {
         "prefix": "sep",
         "body": "/*\n*********************************\n*****        ${1:Fun}       *****\n*********************************\n*/"
+    },
+    "logh":{
+        "prefix": "lh",
+        "body": "#include \"common\/logger.h\""
+    },
+    "logf":{
+        "prefix": "log",
+        "body": "LOG_INFO(\"%d %d\",$1,$2)"
     }
 }

@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<Frhelper_Backup BackupFileVersion="2.0">
+	<Dicts>
+		<Item libid="-22" path="C:/Program Files/WindowsApps/DD146E41.Eudict_12.7.2.0_x86__wq1nbytamsrkg\dic\combined.bin" visible="0" expand="0" name="" char_conversion="0" enable_full_text="0" />
+		<Item libid="-20" path="C:/Program Files/WindowsApps/DD146E41.Eudict_12.7.2.0_x86__wq1nbytamsrkg\dic\combined.bin" visible="1" expand="0" name="" char_conversion="0" enable_full_text="0" />
+		<Item libid="-8" path="C:/Program Files/WindowsApps/DD146E41.Eudict_12.7.2.0_x86__wq1nbytamsrkg\dic\combined.bin" visible="0" expand="0" name="" char_conversion="0" enable_full_text="0" />
+		<Item libid="-7" path="C:/Program Files/WindowsApps/DD146E41.Eudict_12.7.2.0_x86__wq1nbytamsrkg\dic\combined.bin" visible="1" expand="0" name="" char_conversion="0" enable_full_text="0" />
+		<Item libid="-5" path="C:/Program Files/WindowsApps/DD146E41.Eudict_12.7.2.0_x86__wq1nbytamsrkg\dic\combined.bin" visible="1" expand="0" name="" char_conversion="0" enable_full_text="0" />
+		<Item libid="-4" path="C:/Program Files/WindowsApps/DD146E41.Eudict_12.7.2.0_x86__wq1nbytamsrkg\dic\combined.bin" visible="1" expand="0" name="" char_conversion="0" enable_full_text="0" />
+		<Item libid="-3" path="C:/Program Files/WindowsApps/DD146E41.Eudict_12.7.2.0_x86__wq1nbytamsrkg\dic\combined.bin" visible="1" expand="0" name="" char_conversion="0" enable_full_text="0" />
+		<Item libid="-2" path="C:/Program Files/WindowsApps/DD146E41.Eudict_12.7.2.0_x86__wq1nbytamsrkg\dic\combined.bin" visible="1" expand="0" name="" char_conversion="0" enable_full_text="0" />
+		<Item libid="-1" path="C:/Program Files/WindowsApps/DD146E41.Eudict_12.7.2.0_x86__wq1nbytamsrkg\dic\combined.bin" visible="1" expand="0" name="" char_conversion="0" enable_full_text="1" />
+		<Item libid="20020" path="C:/Program Files/WindowsApps/DD146E41.Eudict_12.7.2.0_x86__wq1nbytamsrkg\dic\oln_youdao.eudb" visible="1" expand="0" name="" char_conversion="0" enable_full_text="0" />
+		<Item libid="20301" path="C:/Program Files/WindowsApps/DD146E41.Eudict_12.7.2.0_x86__wq1nbytamsrkg\dic\oln_wiki_cn.eudb" visible="1" expand="0" name="" char_conversion="0" enable_full_text="0" />
+		<Item libid="20303" path="C:/Program Files/WindowsApps/DD146E41.Eudict_12.7.2.0_x86__wq1nbytamsrkg\dic\oln_wiki_en.eudb" visible="1" expand="0" name="" char_conversion="0" enable_full_text="0" />
+		<Item libid="480366799" path="system_tts" visible="1" expand="0" name="" char_conversion="32" enable_full_text="0" />
+		<Item libid="792060457" path="D://OneDrive - hust.edu.cn//tem//cigen_en_new.eudic" visible="1" expand="0" name="" char_conversion="0" enable_full_text="0" />
+		<Item libid="792060557" path="D://OneDrive - hust.edu.cn//tem//cigen_en_classic.eudic" visible="1" expand="0" name="" char_conversion="0" enable_full_text="0" />
+	</Dicts>
+	<DictOrder>
+		<Item libid="792060557" list_type="0" />
+		<Item libid="792060457" list_type="0" />
+		<Item libid="20020" list_type="0" />
+		<Item libid="-1" list_type="0" />
+		<Item libid="-2" list_type="0" />
+		<Item libid="-5" list_type="0" />
+		<Item libid="-4" list_type="0" />
+		<Item libid="-7" list_type="0" />
+		<Item libid="-20" list_type="0" />
+		<Item libid="20301" list_type="0" />
+		<Item libid="20303" list_type="0" />
+		<Item libid="928587764" list_type="2" />
+		<Item libid="569738332" list_type="2" />
+		<Item libid="154061052" list_type="2" />
+		<Item libid="1369888840" list_type="2" />
+		<Item libid="66456409" list_type="2" />
+		<Item libid="221785448" list_type="2" />
+		<Item libid="284692138" list_type="2" />
+		<Item libid="278657664" list_type="2" />
+		<Item libid="480366799" list_type="2" />
+		<Item libid="1756211671" list_type="2" />
+		<Item libid="1388364651" list_type="2" />
+		<Item libid="127848533" list_type="2" />
+		<Item libid="-1" list_type="1" />
+		<Item libid="792060457" list_type="1" />
+		<Item libid="-3" list_type="1" />
+		<Item libid="20020" list_type="1" />
+		<Item libid="792060557" list_type="1" />
+		<Item libid="-2" list_type="1" />
+		<Item libid="-7" list_type="1" />
+		<Item libid="-4" list_type="1" />
+		<Item libid="-5" list_type="1" />
+		<Item libid="20301" list_type="1" />
+		<Item libid="20303" list_type="1" />
+	</DictOrder>
+	<Groups />
+	<OnlineDicts>
+		<Item libid="90026" url="http://www.freedictionary.org/?Query={w}" name="Free Dictionary在线词典" visible="1" color="12860503" official="1" />
+		<Item libid="90022" url="https://www.merriam-webster.com/dictionary/{w}" name="韦氏在线词典" visible="1" color="16752706" official="1" />
+		<Item libid="90001" url="https://cn.bing.com/dict/search?q={w}" name="必应在线词典" visible="1" color="6201950" official="1" />
+		<Item libid="90020" url="https://www.collinsdictionary.com/search/?dictCode=english&amp;q={w}" name="柯林斯在线词典" visible="1" color="10658398" official="1" />
+		<Item libid="90025" url="https://www.urbandictionary.com/define.php?term={w}" name="Urban Dictionary" visible="1" color="6201950" official="1" />
+		<Item libid="90023" url="https://dictionary.cambridge.org/dictionary/english/{w}" name="剑桥词典" visible="1" color="16750026" official="1" />
+		<Item libid="90024" url="https://www.dictionary.com/browse/{w}" name="Dictionary.com在线词典" visible="1" color="13274879" official="1" />
+		<Item libid="90021" url="https://www.ldoceonline.com/search/english/direct/?q={w}" name="朗文当代英语在线词典" visible="1" color="4629503" official="1" />
+		<Item libid="90019" url="https://www.lexico.com/en/definition/{w}" name="Ox Living Dict" visible="1" color="5086899" official="1" />
+	</OnlineDicts>
+</Frhelper_Backup>
