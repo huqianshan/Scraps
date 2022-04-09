@@ -118,6 +118,7 @@ alias commit="git commit -m"
 alias checkout="git checkout"
 alias log="git log --graph"
 alias branch="git branch -a"
+alias stash="git stash"
 
 # linux command
 alias la="ls -ah"
