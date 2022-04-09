@@ -23,7 +23,7 @@ function config_shell() {
 }
 
 ssh -T git@github.com # 确保能够访问
-Shell_list=(".zshrc") # ".bashrc")
+Shell_list=(".zshrc")
 for shell in ${Shell_list[@]}; do
     config_shell $shell ${Shell_Prefix}${shell}
     echo "${Shell_Prefix}${shell}"
@@ -37,6 +37,7 @@ if [ "$OSTYPE" == "msys" ] || [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "win32
     for snip in ${Snippets_list[@]}; do
         config_shell $snip $VsCode_Snippets_Prefix$snip
     done
+    config_shell .bashrc ${Shell_Prefix}.bashrc
 fi
 
 # config_shell "c.json" ${VsCode_Snipates_Prefix}
