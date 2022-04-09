@@ -19,7 +19,7 @@ VsCode_Snippets_Prefix=~/AppData/Roaming/Code/User/snippets/
 
 function config_shell() {
     url="${GitUrl}$1"
-    wget -O $2 "${url}" >/dev/null 2>&1
+    curl -o $2 "${url}" > /dev/null 
 }
 
 ssh -T git@github.com # 确保能够访问
@@ -32,7 +32,6 @@ done
 echo $OSTYPE
 #https://stackoverflow.com/questions/394230/how-to-detect-the-os-from-a-bash-script
 if [ "$OSTYPE" == "msys" ] || [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "win32" ]; then
-    echo "enter?"
     Snippets_list=("c.json" "cpp.json" "shellscript.json")
     for snip in ${Snippets_list[@]}; do
         config_shell $snip $VsCode_Snippets_Prefix$snip
