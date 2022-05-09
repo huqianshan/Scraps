@@ -68,7 +68,6 @@ ZSH_THEME_RANDOM_CANDIDATES=()
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-export FZF_BASE=/usr/bin/fzf
 plugins=(git autojump zsh-autosuggestions zsh-syntax-highlighting fzf)
 source $ZSH/oh-my-zsh.sh
 
