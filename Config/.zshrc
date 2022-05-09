@@ -127,4 +127,5 @@ alias ll="ls -lh"
 # for anaconda python
 # export PATH="/home/hjl/anaconda3/bin:$PATH"
 export PATH="/home/hjl/.local/bin:$PATH"
+export FZF_CTRL_T_OPTS="--preview '(highlight -O ansi -l {} 2> /dev/null || batcat --color=always --style=numbers {} || tree -C {}) 2> /dev/null | head -200'"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
