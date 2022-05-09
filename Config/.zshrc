@@ -68,8 +68,8 @@ ZSH_THEME_RANDOM_CANDIDATES=()
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git autojump zsh-autosuggestions zsh-syntax-highlighting)
-
+export FZF_BASE=/usr/bin/fzf
+plugins=(git autojump zsh-autosuggestions zsh-syntax-highlighting fzf)
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
@@ -103,7 +103,8 @@ alias upgrade="sudo apt-get upgrade"
 alias install="sudo apt-get install"
 alias search="sudo apt-cache search"
 alias list="apt list --installed"
-alias autoremove="sudo apt autoremove"
+alias autorm="sudo apt autoremove"
+alias remove="sudo apt remove"
 alias targz="tar -xvf"
 alias off="sudo shutdown -h now"
 alias reboot="sudo reboot"
@@ -127,3 +128,4 @@ alias ll="ls -lh"
 # for anaconda python
 # export PATH="/home/hjl/anaconda3/bin:$PATH"
 export PATH="/home/hjl/.local/bin:$PATH"
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

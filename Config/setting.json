@@ -47,7 +47,8 @@
                 "name": "Git Bash"
             },
             {
-                "commandline": "ssh -t OptaneSchool \"htop\"",
+                // "commandline": "ssh -t OptaneSchool \"htop\"",
+                "commandline": "ssh  SSD",
                 "font": {
                     "face": "Consolas",
                     "size": 12
@@ -55,13 +56,13 @@
                 "guid": "{38918efe-6566-45da-830c-c0f35713bad8}",
                 "hidden": false,
                 "icon": "D:\\OneDrive - hust.edu.cn\\File\\Pics\\Icons\\icons8-server-64.png",
-                "name": "OptaneSchoolHtop",
-                "tabTitle": "Optane\u76d1\u89c6\u5668"
+                "name": "SSD Server Terminal",
+                "tabTitle": "SSD Server\u76d1\u89c6\u5668"
             },
             {
                 "antialiasingMode": "grayscale",
                 "colorScheme": "One Half Dark",
-                "commandline": "ssh OptaneSchool",
+                "commandline": "ssh Optane",
                 "cursorShape": "filledBox",
                 "experimental.retroTerminalEffect": false,
                 "font": {
@@ -70,8 +71,8 @@
                 },
                 "hidden": false,
                 "icon": "D:\\OneDrive - hust.edu.cn\\File\\Pics\\Icons\\server.png",
-                "name": "OptaneSchoolTerminal",
-                "tabTitle": "OptaneServer"
+                "name": "Optane Server Terminal",
+                "tabTitle": "Optane Server"
             },
             {
                 "commandline": "powershell.exe",

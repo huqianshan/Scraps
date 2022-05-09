@@ -54,12 +54,25 @@
         "prefix": "sep",
         "body": "/*\n*********************************\n*****        ${1:Fun}       *****\n*********************************\n*/"
     },
-    "logh":{
+    "logh": {
         "prefix": "lh",
         "body": "#include \"common\/logger.h\""
     },
-    "logf":{
+    "logf": {
         "prefix": "log",
-        "body": "LOG_INFO(\"%d %d\",$1,$2)"
+        // "body": "LOG_INFO(\"%d %d\",$1,$2)"
+        "body": "LOG(INFO)<<$1;"
+    },
+    "todo": {
+        "prefix": "todo",
+        "body": "// :TODO: :hjl: $1"
+    },
+    "bug": {
+        "prefix": "bug",
+        "body": "// :BUG: :hjl: $1"
+    },
+    "note": {
+        "prefix": "note",
+        "body": "// :NOTE: :hjl: $1"
     }
 }
