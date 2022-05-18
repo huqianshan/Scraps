@@ -8,7 +8,7 @@ USER="hjl"
 # su hjl
 # USER="$(whoami)"
 # echo $USER
-if [[ $(whoami) != ${USER} ]];then
+if [[ $(whoami) != ${USER} ]]; then
     echo "Change to user ${USER} failed"
     exit 1
 else
@@ -16,12 +16,28 @@ else
 fi
 
 # init all package
-sudo ${PACK} update
-PACKLIST="g++ gcc git make cmake ssh zsh autojump bat"
-sudo ${PACK} install ${PACKLIST}
+apps=('git'
+    'cmake'
+    'g++'
+    'ssh'
+    'make'
+    'cmake'
+    'bat'
+    'zsh')
+# sudo ${PACK} update
+for app in "${apps[@]}"; do
+    sudo apt-get install $(echo $app | sed 's/,//g') -y
+done
+
+FZF="~/.fzf"
+if [[ ! -d "${FZF}" ]]; then
+    git clone --depth=1 git@github.com:junegunn/fzf.git ${FZF}
+    ${FZF}/install
+    echo "NO fzf install it finished"
+fi
 
 # set git config
-# git config --global user.name "$(uname -n)" 
+# git config --global user.name "$(uname -n)"
 # git config --global user.email "1196455147@qq.com"
 
 GITIP="# The following lien are fo github hjl
@@ -39,9 +55,9 @@ GITIP="# The following lien are fo github hjl
 #2606:50c0:8001::153 assets-cdn.github.com
 #2606:50c0:8002::153 assets-cdn.github.com
 #2606:50c0:8003::153 assets-cdn.github.com"
-if ! grep -q "github" /etc/hosts;then
+if ! grep -q "github" /etc/hosts; then
     echo "Not found Github ip in hosts, So add it."
-    sudo echo ${GITIP} >> /etc/hosts
+    sudo echo ${GITIP} >>/etc/hosts
 fi
 # sudo systemctl is-active systemd-resolved
 # sudo systemd-resolve --statistics
@@ -53,7 +69,7 @@ ssh -T git@github.com # 确保能够访问
 
 # ready for zsh
 OMZ=~/.oh-my-zsh/
-if [[ -d "${OMZ}" ]];then
+if [[ -d "${OMZ}" ]]; then
     echo "${OMZ} Existed; Either delete or ignore it"
 else
     echo "Download ${OMZ}"
@@ -61,13 +77,13 @@ else
 fi
 
 ATS=${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-if [[ -d "${ATS}" ]];then
+if [[ -d "${ATS}" ]]; then
     echo ${ATS} " Existed; Either delete or ignore it"
 else
     git clone https://github.com/zsh-users/zsh-autosuggestions ${ATS}
 fi
 SH=${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
-if [[ -d "${SH}" ]];then
+if [[ -d "${SH}" ]]; then
     echo ${SH} " Existed; Either delete or ignore it"
 else
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${SH}
@@ -80,14 +96,13 @@ VsCode_Snippets_Prefix=~/AppData/Roaming/Code/User/snippets/
 
 function config_shell() {
     url="${GitUrl}$1"
-    if [[ -f "${2}" ]];then
+    if [[ -f "${2}" ]]; then
         echo "${2} existed rename ${2}.old"
         mv ${2} ${2}.old
     fi
-    curl -o $2 "${url}" > /dev/null 
+    curl -o $2 "${url}" >/dev/null
     source $2
 }
-
 
 Shell_list=(".zshrc")
 for shell in ${Shell_list[@]}; do
@@ -106,4 +121,3 @@ if [ "$OSTYPE" == "msys" ] || [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "win32
 fi
 
 # config_shell "c.json" ${VsCode_Snipates_Prefix}
-

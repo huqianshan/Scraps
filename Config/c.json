@@ -52,5 +52,17 @@
 	"Seperate Char": {
 		"prefix": "sep",
 		"body": "/*\n*********************************\n*****        ${1:Fun}       *****\n*********************************\n*/"
+	},
+	"todo": {
+		"prefix": "todo",
+		"body": "// :TODO: :hjl: $1"
+	},
+	"bug": {
+		"prefix": "bug",
+		"body": "// :BUG: :hjl: $1"
+	},
+	"note": {
+		"prefix": "note",
+		"body": "// :NOTE: :hjl: $1"
 	}
 }
