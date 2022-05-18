@@ -12,82 +12,82 @@
 
 static inline void _sync_tsc(void)
 {
-  asm volatile("cpuid"
-               :
-               :
-               : "%rax", "%rbx", "%rcx", "%rdx");
+    asm volatile("cpuid"
+                 :
+                 :
+                 : "%rax", "%rbx", "%rcx", "%rdx");
 }
 
 static inline uint64_t _rdtsc(void)
 {
-  unsigned a, d;
-  asm volatile("rdtsc"
-               : "=a"(a), "=d"(d)
-               :
-               : "%rbx", "%rcx");
-  return ((uint64_t)a) | (((uint64_t)d) << 32);
+    unsigned a, d;
+    asm volatile("rdtsc"
+                 : "=a"(a), "=d"(d)
+                 :
+                 : "%rbx", "%rcx");
+    return ((uint64_t)a) | (((uint64_t)d) << 32);
 }
 
 static inline uint64_t _rdtscp(void)
 {
-  unsigned a, d;
-  asm volatile("rdtscp"
-               : "=a"(a), "=d"(d)
-               :
-               : "%rbx", "%rcx");
-  return ((uint64_t)a) | (((uint64_t)d) << 32);
+    unsigned a, d;
+    asm volatile("rdtscp"
+                 : "=a"(a), "=d"(d)
+                 :
+                 : "%rbx", "%rcx");
+    return ((uint64_t)a) | (((uint64_t)d) << 32);
 }
 
 static inline uint64_t bench_start(void)
 {
-  // unsigned  cycles_low, cycles_high;
-  // uint64_t t;
-  //
-  // asm volatile( "CPUID\n\t" // serialize
-  //               "RDTSC\n\t" // read clock
-  //               "mov %%edx, %0\n\t"
-  //               "mov %%eax, %1\n\t"
-  //               : "=r" (cycles_high), "=r" (cycles_low)
-  //               :: "%rax", "%rbx", "%rcx", "%rdx" );
-  // return ((uint64_t) cycles_high << 32) | cycles_low;
+    // unsigned  cycles_low, cycles_high;
+    // uint64_t t;
+    //
+    // asm volatile( "CPUID\n\t" // serialize
+    //               "RDTSC\n\t" // read clock
+    //               "mov %%edx, %0\n\t"
+    //               "mov %%eax, %1\n\t"
+    //               : "=r" (cycles_high), "=r" (cycles_low)
+    //               :: "%rax", "%rbx", "%rcx", "%rdx" );
+    // return ((uint64_t) cycles_high << 32) | cycles_low;
 
-  _sync_tsc();
-  return _rdtsc();
+    _sync_tsc();
+    return _rdtsc();
 }
 
 static inline uint64_t bench_end(void)
 {
-  // unsigned  cycles_low, cycles_high;
-  // uint64_t t;
-  //
-  // asm volatile( "RDTSCP\n\t" // read clock + serialize
-  //               "mov %%edx, %0\n\t"
-  //               "mov %%eax, %1\n\t"
-  //               "CPUID\n\t" // serialze -- but outside clock region!
-  //               : "=r" (cycles_high), "=r" (cycles_low)
-  //               :: "%rax", "%rbx", "%rcx", "%rdx" );
-  // return ((uint64_t) cycles_high << 32) | cycles_low;
+    // unsigned  cycles_low, cycles_high;
+    // uint64_t t;
+    //
+    // asm volatile( "RDTSCP\n\t" // read clock + serialize
+    //               "mov %%edx, %0\n\t"
+    //               "mov %%eax, %1\n\t"
+    //               "CPUID\n\t" // serialze -- but outside clock region!
+    //               : "=r" (cycles_high), "=r" (cycles_low)
+    //               :: "%rax", "%rbx", "%rcx", "%rdx" );
+    // return ((uint64_t) cycles_high << 32) | cycles_low;
 
-  uint64_t t = _rdtscp();
-  _sync_tsc();
-  return t;
+    uint64_t t = _rdtscp();
+    _sync_tsc();
+    return t;
 }
 
 static uint64_t measure_tsc_overhead(void)
 {
-  uint64_t t0, t1, overhead = ~0;
-  int i;
+    uint64_t t0, t1, overhead = ~0;
+    int i;
 
-  for (i = 0; i < TSC_OVERHEAD_N; i++)
-  {
-    t0 = bench_start();
-    asm volatile("");
-    t1 = bench_end();
-    if (t1 - t0 < overhead)
-      overhead = t1 - t0;
-  }
+    for (i = 0; i < TSC_OVERHEAD_N; i++)
+    {
+        t0 = bench_start();
+        asm volatile("");
+        t1 = bench_end();
+        if (t1 - t0 < overhead)
+            overhead = t1 - t0;
+    }
 
-  return overhead;
+    return overhead;
 }
 
 /*
@@ -115,9 +115,23 @@ how many TSC cycles occur in 50ms.
 
 static inline uint64_t cycles_to_ns(uint64_t cycles)
 {
-  // XXX: This is not safe! We don't have a good cross-platform way to
-  // determine the TSC frequency for some strange reason.
-  return cycles * 1000 / TSC_FREQ_MHZ;
+    // XXX: This is not safe! We don't have a good cross-platform way to
+    // determine the TSC frequency for some strange reason.
+    return cycles * 1000 / TSC_FREQ_MHZ;
+}
+
+static inline uint64_t cycles_to_us(uint64_t cycles)
+{
+    // XXX: This is not safe! We don't have a good cross-platform way to
+    // determine the TSC frequency for some strange reason.
+    return cycles / TSC_FREQ_MHZ;
+}
+
+static inline double cycles_to_sec(uint64_t cycles)
+{
+    // XXX: This is not safe! We don't have a good cross-platform way to
+    // determine the TSC frequency for some strange reason.
+    return cycles * 1.0 / (TSC_FREQ_MHZ * 1e6);
 }
 
 #endif /* __TSC_HDR */
