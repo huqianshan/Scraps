@@ -10,7 +10,7 @@
 
 #define TSC_OVERHEAD_N 100000
 
-static inline void _sync_tsc(void)
+static inline void __sync_tsc(void)
 {
     asm volatile("cpuid"
                  :
@@ -18,7 +18,7 @@ static inline void _sync_tsc(void)
                  : "%rax", "%rbx", "%rcx", "%rdx");
 }
 
-static inline uint64_t _rdtsc(void)
+static inline uint64_t __rdstc(void)
 {
     unsigned a, d;
     asm volatile("rdtsc"
@@ -28,7 +28,7 @@ static inline uint64_t _rdtsc(void)
     return ((uint64_t)a) | (((uint64_t)d) << 32);
 }
 
-static inline uint64_t _rdtscp(void)
+static inline uint64_t __rdstcp(void)
 {
     unsigned a, d;
     asm volatile("rdtscp"
@@ -51,8 +51,8 @@ static inline uint64_t bench_start(void)
     //               :: "%rax", "%rbx", "%rcx", "%rdx" );
     // return ((uint64_t) cycles_high << 32) | cycles_low;
 
-    _sync_tsc();
-    return _rdtsc();
+    __sync_tsc();
+    return __rdstc();
 }
 
 static inline uint64_t bench_end(void)
@@ -68,8 +68,8 @@ static inline uint64_t bench_end(void)
     //               :: "%rax", "%rbx", "%rcx", "%rdx" );
     // return ((uint64_t) cycles_high << 32) | cycles_low;
 
-    uint64_t t = _rdtscp();
-    _sync_tsc();
+    uint64_t t = __rdstcp();
+    __sync_tsc();
     return t;
 }
 
