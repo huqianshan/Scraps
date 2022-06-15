@@ -30,7 +30,7 @@ using namespace std;
 /* Color for output */
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__) || defined(_WIN64)
 // do nothing
-#elif defined(__linux) || defined(__linux__) || defined(__unix) || defined(__unix__) || deined(__APPLE__)
+#elif defined(__linux) || defined(__linux__) || defined(__unix) || defined(__unix__) || defined(__APPLE__)
 // the following are UBUNTU/LINUX, and MacOS ONLY terminal color codes.
 #define RESET "\033[0m"
 #define BLACK "\033[30m"              /* Black */
@@ -97,14 +97,12 @@ struct ListNode
 
 void trimLeftTrailingSpaces(string &input)
 {
-    input.erase(input.begin(), find_if(input.begin(), input.end(), [](int ch)
-                                       { return !isspace(ch); }));
+    input.erase(input.begin(), find_if(input.begin(), input.end(), [](int ch) { return !isspace(ch); }));
 }
 
 void trimRightTrailingSpaces(string &input)
 {
-    input.erase(find_if(input.rbegin(), input.rend(), [](int ch)
-                        { return !isspace(ch); })
+    input.erase(find_if(input.rbegin(), input.rend(), [](int ch) { return !isspace(ch); })
                     .base(),
                 input.end());
 }
@@ -335,8 +333,7 @@ vector<size_t> sort_indexes(const vector<T> &v)
     vector<size_t> idx(v.size());
     iota(idx.begin(), idx.end(), 0);
     sort(idx.begin(), idx.end(),
-         [&v](size_t i1, size_t i2)
-         { return v[i1] < v[i2]; });
+         [&v](size_t i1, size_t i2) { return v[i1] < v[i2]; });
     return idx;
 }
 

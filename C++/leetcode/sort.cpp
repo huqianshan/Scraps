@@ -1,5 +1,5 @@
+#include "../../C/intel_tsc/tsc.h"
 #include "helper.h"
-
 /*
 1. 快速排序
 
@@ -263,7 +263,7 @@ int main(int argc, char const *argv[])
     // vector<int> nums = {3, 2, 1, 1};
     srand((unsigned)time(NULL));
     // vector<int> nums = {1, 1, 1, 1, 2, 1};
-    vector<int> nums = {1, 1, 2, 2, 3, 4, -1};
+    /*   vector<int> nums = {1, 1, 2, 2, 3, 4, -1};
     nums = {3, 2, 3, 1, 2, 4, 5, 5, 6};
     quickSort(nums, 0, nums.size() - 1);
     // heapSort(nums);
@@ -309,5 +309,26 @@ int main(int argc, char const *argv[])
     char t[] = "123";
 
     string s = (std::move(string(static_cast<const char *>(t))));
-    test_string(s);
+    test_string(s); */
+
+    uint64_t size = 60ul * 1024 * 1024;
+
+    uint64_t begin = bench_start();
+    vector<int> nums_big(size, 0);
+    uint64_t end = bench_end();
+    printf("Vector %4.4lf ms\n", cycles_to_sec(end - begin));
+
+    begin = bench_start();
+    for (auto &i : nums_big)
+    {
+        i = (uint64_t)rand() * rand();
+    }
+    end = bench_end();
+    printf("Give value %4.4lf s\n", cycles_to_sec(end - begin));
+
+    begin = bench_start();
+    // quickSort(nums_big, 0, size - 1);
+    sort(nums_big.begin(), nums_big.end());
+    end = bench_end();
+    printf("Sort %4.4lf s\n", cycles_to_sec(end - begin));
 }
