@@ -1,4 +1,4 @@
-//https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
+// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
 
 /*
 __ATOMIC_RELAXED
@@ -19,9 +19,11 @@ Combines the effects of both __ATOMIC_ACQUIRE and __ATOMIC_RELEASE.
 __ATOMIC_SEQ_CST
 Enforces total ordering with all other __ATOMIC_SEQ_CST operations.
 */
-
+#define uint64_t unsigned long long
+#define TRUE (1)
+#define FALSE (0)
 #define ATOMIC_LOAD(ptr) __atomic_load_n(ptr, __ATOMIC_ACQUIRE)
-#define ATOMIC_STORE(ptr) __atomic__store_n(ptr, __ATOMIC_RELEASE)
+#define ATOMIC_STORE(ptr, val) __atomic_store_n(ptr, val, __ATOMIC_RELEASE)
 
 // algorithm operation
 
@@ -35,7 +37,6 @@ Enforces total ordering with all other __ATOMIC_SEQ_CST operations.
 
 #define CACHELINESIZE (64)
 #define ____CACHELINE_ALIGNED __attribute__((aligned(CACHELINESIZE)))
-
 
 /*
 
@@ -91,7 +92,7 @@ inline void release_lock(int *flag)
     ATOMIC_STORE(flag, 0);
     // printf("flag: *p %p: %d\n", flag, *flag);
 }
-/* 
+/*
 struct cas_spin_lock
 {
     uint64_t *lock;
@@ -131,5 +132,3 @@ struct cas_spin_lock
         release_lock(&lock);
     }
 };
-
-

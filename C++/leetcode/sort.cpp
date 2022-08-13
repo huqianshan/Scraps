@@ -311,7 +311,7 @@ int main(int argc, char const *argv[])
     string s = (std::move(string(static_cast<const char *>(t))));
     test_string(s); */
 
-    uint64_t size = 60ul * 1024 * 1024;
+    uint64_t size = 384ul * 1024 * 1024;
 
     uint64_t begin = bench_start();
     vector<int> nums_big(size, 0);
