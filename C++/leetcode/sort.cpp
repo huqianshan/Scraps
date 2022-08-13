@@ -257,6 +257,17 @@ int test_string(string s)
     cout << s << endl;
     return 3;
 }
+
+typedef struct Page
+{
+    union
+    {
+        char bytes[4096];
+        int int_bytes[4096 / sizeof(int)];
+    };
+
+} Page;
+
 int main(int argc, char const *argv[])
 {
     // cout << 3 % 1 << endl;
@@ -314,9 +325,9 @@ int main(int argc, char const *argv[])
     uint64_t size = 384ul * 1024 * 1024;
 
     uint64_t begin = bench_start();
-    vector<int> nums_big(size, 0);
+    vector<uint64_t> nums_big(size, 0);
     uint64_t end = bench_end();
-    printf("Vector %4.4lf ms\n", cycles_to_sec(end - begin));
+    printf("Vector %4.4lf s\n", cycles_to_sec(end - begin));
 
     begin = bench_start();
     for (auto &i : nums_big)
@@ -329,6 +340,36 @@ int main(int argc, char const *argv[])
     begin = bench_start();
     // quickSort(nums_big, 0, size - 1);
     sort(nums_big.begin(), nums_big.end());
+    // nums_big.sort();
     end = bench_end();
     printf("Sort %4.4lf s\n", cycles_to_sec(end - begin));
+
+    /*  for (auto i = nums_big.begin(); i != nums_big.begin(); i++)
+    {
+        cout << *i << " ";
+    } */
+
+    printf("%lu\n", sizeof(Page));
+    begin = bench_start();
+    vector<Page *> page_array(1024ul * 1024 * 24, nullptr);
+
+    // for (int j = 0; j < page_array.size(); j++)
+    // {
+    // page_array[j] = (Page *)calloc(0xfa, sizeof(Page));
+    // page_array[j] = (Page *)malloc(sizeof(Page));
+    /*   for (int i = 0; i < 4096 / (sizeof(int)); i++)
+        {
+            auto offset = ((uint64_t)i + (uint64_t)j * 4096ul) % size;
+            // page_array[j]->intbytes[i] = nums_big[offset];
+            page_array[j]->int_bytes[i] = nums_big[offset];
+        } */
+    // }
+    // auto ret = malloc(sizeof(Page) * page_array.size());
+    end = bench_end();
+    printf("Malloc Node %4.4lf s\n", cycles_to_sec(end - begin));
+
+    for (auto &p : page_array)
+    {
+        free(p);
+    }
 }
