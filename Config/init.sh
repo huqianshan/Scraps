@@ -57,7 +57,7 @@ GITIP="# The following lien are fo github hjl
 #2606:50c0:8003::153 assets-cdn.github.com"
 if ! grep -q "github" /etc/hosts; then
     echo "Not found Github ip in hosts, So add it."
-    sudo echo ${GITIP} >>/etc/hosts
+    # sudo echo ${GITIP} >>/etc/hosts
 fi
 # sudo systemctl is-active systemd-resolved
 # sudo systemd-resolve --statistics
