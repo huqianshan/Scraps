@@ -66,3 +66,10 @@ dkms.conf
 normal
 a.out
 
+## log and json
+**/*.log
+**/*.json
+
+## specified directory
+/Tests/pics/**
+/Tests/data/*.csv

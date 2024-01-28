@@ -23,7 +23,11 @@ apps=('git'
     'make'
     'cmake'
     'bat'
-    'zsh')
+    'zsh'
+    'iostat'
+    'sysstat'
+    'htop')
+# perf
 # sudo ${PACK} update
 for app in "${apps[@]}"; do
     sudo apt-get install $(echo $app | sed 's/,//g') -y
