@@ -3,17 +3,28 @@
 PACK="apt"
 USER="hjl"
 # add new USER hjl
-# sudo adduser ${USER}
-# sudo usermod -aG sudo ${USER}
-# su hjl
-# USER="$(whoami)"
-# echo $USER
+sudo adduser ${USER}
+sudo usermod -aG sudo ${USER}
+su hjl
+USER="$(whoami)"
+echo $USER
 if [[ $(whoami) != ${USER} ]]; then
     echo "Change to user ${USER} failed"
     exit 1
 else
     echo "Add user $(whoami) Succeed"
 fi
+
+# set git config
+git config --global user.name "$(whoami)-$(uname -n)"
+git config --global user.email "hujinlei1999@qq.com"
+
+# on local machine ssh-copy-id hjl@remote-machine
+# copy or regenerate the key on remote key
+
+# 1. add public key
+# 2. upload private key
+ssh -T git@github.com # 确保能够访问
 
 # init all package
 apps=('git'
@@ -26,50 +37,15 @@ apps=('git'
     'zsh'
     'iostat'
     'sysstat'
-    'htop')
+    'htop'
+    'ranger')
 # perf
 # sudo ${PACK} update
 for app in "${apps[@]}"; do
     sudo apt-get install $(echo $app | sed 's/,//g') -y
 done
 
-FZF="~/.fzf"
-if [[ ! -d "${FZF}" ]]; then
-    git clone --depth=1 git@github.com:junegunn/fzf.git ${FZF}
-    ${FZF}/install
-    echo "NO fzf install it finished"
-fi
 
-# set git config
-# git config --global user.name "$(uname -n)"
-# git config --global user.email "1196455147@qq.com"
-
-GITIP="# The following lien are fo github hjl
-140.82.113.3 github.com
-199.232.69.194 github.global.ssl.fastly.net
-185.199.108.153 assets-cdn.github.com
-185.199.109.153 assets-cdn.github.com
-185.199.110.153 assets-cdn.github.com
-185.199.111.153 assets-cdn.github.com
-185.199.108.133 raw.githubusercontent.com
-185.199.109.133 raw.githubusercontent.com
-185.199.110.133 raw.githubusercontent.com
-185.199.111.133 raw.githubusercontent.com
-#2606:50c0:8000::153 assets-cdn.github.com
-#2606:50c0:8001::153 assets-cdn.github.com
-#2606:50c0:8002::153 assets-cdn.github.com
-#2606:50c0:8003::153 assets-cdn.github.com"
-if ! grep -q "github" /etc/hosts; then
-    echo "Not found Github ip in hosts, So add it."
-    # sudo echo ${GITIP} >>/etc/hosts
-fi
-# sudo systemctl is-active systemd-resolved
-# sudo systemd-resolve --statistics
-sudo systemd-resolve --flush-caches
-
-# 1. add public key
-# 2. upload private key
-ssh -T git@github.com # 确保能够访问
 
 # ready for zsh
 OMZ=~/.oh-my-zsh/
@@ -91,6 +67,14 @@ if [[ -d "${SH}" ]]; then
     echo ${SH} " Existed; Either delete or ignore it"
 else
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${SH}
+fi
+
+# fzf is for the history command.
+FZF="~/.fzf"
+if [[ ! -d "${FZF}" ]]; then
+    git clone --depth=1 git@github.com:junegunn/fzf.git ${FZF}
+    ${FZF}/install
+    echo "NO fzf install it finished"
 fi
 
 # download shell config such as alias
@@ -125,3 +109,31 @@ if [ "$OSTYPE" == "msys" ] || [ "$OSTYPE" == "cygwin" ] || [ "$OSTYPE" == "win32
 fi
 
 # config_shell "c.json" ${VsCode_Snipates_Prefix}
+
+
+
+
+
+#GITIP="# The following lien are fo github hjl
+#140.82.113.3 github.com
+#199.232.69.194 github.global.ssl.fastly.net
+#185.199.108.153 assets-cdn.github.com
+#185.199.109.153 assets-cdn.github.com
+#185.199.110.153 assets-cdn.github.com
+#185.199.111.153 assets-cdn.github.com
+#185.199.108.133 raw.githubusercontent.com
+#185.199.109.133 raw.githubusercontent.com
+#185.199.110.133 raw.githubusercontent.com
+#185.199.111.133 raw.githubusercontent.com
+#2606:50c0:8000::153 assets-cdn.github.com
+#2606:50c0:8001::153 assets-cdn.github.com
+#2606:50c0:8002::153 assets-cdn.github.com
+#2606:50c0:8003::153 assets-cdn.github.com"
+# if ! grep -q "github" /etc/hosts; then
+    # echo "Not found Github ip in hosts, So add it."
+    # sudo echo ${GITIP} >>/etc/hosts
+# fi
+# sudo systemctl is-active systemd-resolved
+# sudo systemd-resolve --statistics
+# sudo systemd-resolve --flush-caches
+
