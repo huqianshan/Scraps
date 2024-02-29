@@ -38,12 +38,17 @@ apps=('git'
     'iostat'
     'sysstat'
     'htop'
-    'ranger')
+    'ranger'
+    'fzf')
 # perf
 # sudo ${PACK} update
 for app in "${apps[@]}"; do
     sudo apt-get install $(echo $app | sed 's/,//g') -y
 done
+
+# use vim default editor
+echo export EDITOR=/usr/bin/vim >> ~/.bashrc                                                                                                                   [8:36:22]
+echo export EDITOR=/usr/bin/vim >> ~/.zshrc
 
 
 
@@ -70,12 +75,12 @@ else
 fi
 
 # fzf is for the history command.
-FZF="~/.fzf"
-if [[ ! -d "${FZF}" ]]; then
-    git clone --depth=1 git@github.com:junegunn/fzf.git ${FZF}
-    ${FZF}/install
-    echo "NO fzf install it finished"
-fi
+# FZF="~/.fzf"
+# if [[ ! -d "${FZF}" ]]; then
+    # git clone --depth=1 git@github.com:junegunn/fzf.git ${FZF}
+    # ${FZF}/install
+    # echo "NO fzf install it finished"
+# fi
 
 # download shell config such as alias
 GitUrl="https://raw.githubusercontent.com/huqianshan/Scraps/main/Config/"
