@@ -1,10 +1,10 @@
 #! /bin/bash
 
 DEV=nvme2n2
-# NUMJOBS=(1 4 8 16 32 48 64)
-# NUMBS=(4K 8K 16K 32K 64K 128K 256K 512K 1M)
-NUMJOBS=(1)
-NUMBS=(4K)
+NUMJOBS=(1 4 8 16 32 48 64)
+NUMBS=(4K 8K 16K 32K 64K 128K 256K 512K 1M)
+# NUMJOBS=(1)
+# NUMBS=(4K)
 RUNTIME=30
 # if [[ "$#" -ne "1" ]]; then echo "Requires device name (e.g. nvme2n2) argument" && exit; fi
 
@@ -40,16 +40,17 @@ else
 fi
 
 ioengine=psync
+NUMJOBS=(1 2 4 6 8 10 12 14 16)
 for jobs in ${NUMJOBS[@]}; do
     for BS in ${NUMBS[@]}; do
         echo "Running benchmarks psync write ${DEV} ${DEV_SCHEDULER} jobs bs: $jobs $BS"
         fio --name=$(echo "${DEV}_psync_write_${DEV_SCHEDULER}_${BS}_${jobs}") \
-            --output=$(echo "./data/${DEV}_psync_write_${DEV_SCHEDULER}_${BS}_${jobs}.json") --output-format=json --filename=/dev/$DEV --numjobs=$jobs --direct=1 --ioengine=psync --zonemode=zbd --rw=write --iodepth=1 --time_based --thread --group_reporting --bs=$BS --runtime=$RUNTIME --numa_cpu_nodes=$DEV_NUMA_NODE \
+            --output=$(echo "./data/small/${DEV}_psync_write_${DEV_SCHEDULER}_${BS}_${jobs}.json") --output-format=json --filename=/dev/$DEV --numjobs=$jobs --direct=1 --ioengine=psync --zonemode=zbd --rw=write --iodepth=1 --time_based --thread --group_reporting --bs=$BS --runtime=$RUNTIME --numa_cpu_nodes=$DEV_NUMA_NODE \
             --ramp_time=5 --percentile_list=50:95:99:99.9:99.99:99.999:99.9999:99.99999:100
 
         echo "Running benchmarks libaio write ${DEV} ${DEV_SCHEDULER} jobs bs: $jobs $BS"
         fio --name=$(echo "${DEV}_libaio_write_${DEV_SCHEDULER}_${BS}_${jobs}") \
-            --output=$(echo "./data/${DEV}_libaio_write_${DEV_SCHEDULER}_${BS}_${jobs}.json") --output-format=json --filename=/dev/$DEV --numjobs=1 --direct=1 --ioengine=libaio --iodepth=$jobs --zonemode=zbd --rw=write \
+            --output=$(echo "./data/small/${DEV}_libaio_write_${DEV_SCHEDULER}_${BS}_${jobs}.json") --output-format=json --filename=/dev/$DEV --numjobs=1 --direct=1 --ioengine=libaio --iodepth=$jobs --zonemode=zbd --rw=write \
             --time_based --thread --group_reporting --bs=$BS --runtime=$RUNTIME --numa_cpu_nodes=$DEV_NUMA_NODE \
             --ramp_time=5 --percentile_list=50:95:99:99.9:99.99:99.999:99.9999:99.99999:100
     done
@@ -62,21 +63,21 @@ done
 # echo mq-deadline | tee /sys/block/$DEV/queue/scheduler >/dev/null
 # echo "Filling entire namespace for read benchs"
 # fio --name=zns-fio --filename=/dev/$DEV --direct=1 --size=$MQ_SIZE --ioengine=libaio --iodepth=4 --rw=write --bs=512K --zonemode=zbd >/dev/null
-
+NUMJOBS=(1 4 8 16 32 48 64)
 # Run fio for each active zone setup
 for jobs in ${NUMJOBS[@]}; do
     for BS in ${NUMBS[@]}; do
+        echo "Running benchmarks read libaio ${DEV} ${DEV_SCHEDULER} jobs bs: $jobs $BS"
+        fio --name=$(echo "${DEV}_libaio_read_${DEV_SCHEDULER}_${BS}_${jobs}") \
+            --output=$(echo "./data/${DEV}_libaio_read_${DEV_SCHEDULER}_${BS}_${jobs}.json") --output-format=json --filename=/dev/$DEV --numjobs=1 --direct=1 --ioengine=libaio --iodepth=$jobs --zonemode=zbd --rw=randread \
+            --time_based --group_reporting --bs=$BS --runtime=$RUNTIME --numa_cpu_nodes=$DEV_NUMA_NODE \
+            --ramp_time=5 --percentile_list=50:95:99:99.9:99.99:99.999:99.9999:99.99999:100
+
         echo "Running benchmarks read psync ${DEV} ${DEV_SCHEDULER} jobs bs: $jobs $BS"
 
         fio --name=$(echo "${DEV}_psync_read_${DEV_SCHEDULER}_${BS}_${jobs}") \
             --output=$(echo "./data/${DEV}_psync_read_${DEV_SCHEDULER}_${BS}_${jobs}.json") --output-format=json --filename=/dev/$DEV --numjobs=$jobs --direct=1 --ioengine=psync --zonemode=zbd --rw=randread \
             --iodepth=1 --time_based --thread --group_reporting --bs=$BS --runtime=$RUNTIME --numa_cpu_nodes=$DEV_NUMA_NODE \
-            --ramp_time=5 --percentile_list=50:95:99:99.9:99.99:99.999:99.9999:99.99999:100
-
-        echo "Running benchmarks read libaio ${DEV} ${DEV_SCHEDULER} jobs bs: $jobs $BS"
-        fio --name=$(echo "${DEV}_libaio_read_${DEV_SCHEDULER}_${BS}_${jobs}") \
-            --output=$(echo "./data/${DEV}_libaio_read_${DEV_SCHEDULER}_${BS}_${jobs}.json") --output-format=json --filename=/dev/$DEV --numjobs=1 --direct=1 --ioengine=libaio --iodepth=$jobs --zonemode=zbd --rw=randread \
-            --time_based --group_reporting --bs=$BS --runtime=$RUNTIME --numa_cpu_nodes=$DEV_NUMA_NODE \
             --ramp_time=5 --percentile_list=50:95:99:99.9:99.99:99.999:99.9999:99.99999:100
     done
 done

@@ -106,14 +106,19 @@ def process_file(json_file_path,csv_file_path,node="jobs"):
 
         print ("Just completed writing csv file with %d columns" % len(header))
 
+#%% 
+"""
+old method api iomode_dict
+"""
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# io_mode='psync'
-io_mode='libaio'
+io_mode='psync'
+# io_mode='libaio'
 iomode_dict={'psync':'jobs_job options_numjobs','libaio':'jobs_job options_iodepth'}
 # rw_mode='randread'
 rw_mode='write'
+
 def get_data(df, x_label,y_label="jobs_write_bw_mean"):
     smode=(df['jobs_job options_ioengine']==io_mode)
     rwmode=(df['jobs_job options_rw']==rw_mode)
@@ -210,8 +215,9 @@ import pandas as pd
 io_mode='psync'
 # io_mode='libaio'
 iomode_dict={'psync':'Numjobs','libaio':'IODepth'}
-rw_mode='randread'
-# rw_mode='write'
+# rw_mode='randread'
+rw_mode='write'
+filename='nvme2n2-4'
 def get_data(df, x_label,y_label="jobs_write_bw_mean"):
     smode=(df['Ioengine']==io_mode)
     rwmode=(df['Mode']==rw_mode)
@@ -223,10 +229,10 @@ def get_data(df, x_label,y_label="jobs_write_bw_mean"):
 
 file=f'./data/fio_{filename}.csv'
 df = pd.read_csv(file)
-x_labels = ['4K', '8K', '16K','32K','64K','128K','256K','512K','1M']
-# ylabel="WRITE_BW"
+x_labels = ['4K', '8K', '16K','32K','64K','128K']#,'256K','512K','1M']
+ylabel="WRITE_BW"
 # ylabel="WRITE_IOPS"
-ylabel="READ_BW"
+# ylabel="READ_BW"
 # ylabel="READ_IOPS"
 markers = ['o-', 'D-', 'v-', 's-', 'p-', 'h-','o-','D-','v-']
 data_dict = {label: get_data(df, label,ylabel) for label in x_labels}
@@ -240,7 +246,7 @@ for label, marker in zip(x_labels, markers):
 
 plt.xlabel("concurrency",fontsize=12)
 plt.ylabel(ylabel.replace('jobs_',""),fontsize=12)
-# filename='nvme2n2'
+
 title=f'{filename} {ylabel} with {io_mode}'
 plt.title(title,fontsize=15)
 plt.xticks(data_dict['4K'][iomode_dict[io_mode]].to_list(),fontsize=11)  # 设置x轴的刻度为数据
@@ -249,4 +255,39 @@ plt.legend(fontsize=12,ncol=2)
 plt.savefig(f"./pics/{title.replace(' ','_')}.png",dpi=300,bbox_inches='tight')
 plt.show()
 
+# %%
+import matplotlib.pyplot as plt
+
+# 数据
+labels = ['KVPairs', 'B+TreeIndex', 'FileSystem:Ext4', 'SSD:P4510@2TB']
+values = [64, 3912.58, 7715.17, 13887.306]
+amplifs = [values[i] / values[0] if i != 0 else 1 for i in range(len(values))]
+
+# 绘制柱状图
+plt.figure(figsize=(6, 4))
+plt.style.use('seaborn-paper')
+hatches = ['/', '//', '///', '////']  # 定义条纹样式
+# bars = plt.bar(labels, values,color=['#F9F7C9', '#D5F0C1', '#AAD9BB', '#80BCBD'])
+#,color=['#F9F7C9', '#FDE767', '#F3B95F', '#D04848'],hatch='//'
+bars = plt.bar(labels, values,color="white",edgecolor="black")
+
+# 在每个柱子上# 在每个柱子上添加文字标签，并在两个柱子之间添加一个符号
+# for i, (bar, amplif) in enumerate(zip(bars, amplifs)):
+    # yval = bar.get_height()
+    # plt.text(bar.get_x() + bar.get_width()/2, yval + 0.05, f"X{amplif:.1f}", ha='center', va='bottom')
+    # if i > 0:
+        # prev_bar = bars[i - 1]
+        # prev_yval = prev_bar.get_height()
+        # plt.annotate("", xy=(prev_bar.get_x() + prev_bar.get_width()/2, prev_yval), xytext=(bar.get_x() + bar.get_width()/2, yval), arrowprops=dict(arrowstyle="<-->"))
+        # plt.text((prev_bar.get_x() + bar.get_x() + bar.get_width())/2, (prev_yval + yval)/2, f"{yval / prev_yval:.1f}", ha='center', va='center')
+for i, (bar, amplif) in enumerate(zip(bars, amplifs)):
+    yval = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width()/2, yval + 0.05, f"X{amplif:.1f}", ha='center', va='bottom')
+    bar.set_hatch(hatches[i])  # 设置条纹样式
+
+# plt.xlabel(fontsize=14)
+# plt.xticks(range(len(labels)), labels, fontsize=10)  # 设置x轴的刻度标签和它们的字体大小
+plt.ylabel('Write Traffic/MB',fontsize=14)
+plt.title('The Write Amplification of B+Tree Index on Traditional SSD',fontsize=16)
+plt.show()
 # %%
