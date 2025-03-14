@@ -4,76 +4,82 @@ PACK="apt"
 USER="hjl"
 
 function check_user() {
-  if id "${USER}" &>/dev/null; then
-    echo "User ${USER} exists."
-    return 0
-  else
-    echo "User ${USER} does not exist."
-    return 1
-  fi
+    if id "${USER}" &>/dev/null; then
+        echo "User ${USER} exists."
+        return 0
+    else
+        echo "User ${USER} does not exist."
+        return 1
+    fi
 }
 
 function add_user() {
-  if ! check_user; then
-    echo "try to create ${USER}.."
-    sudo adduser ${USER}
-    sudo usermod -aG sudo ${USER}
-    su ${USER}
-    echo $USER
-  fi
+    if ! check_user; then
+        echo "try to create ${USER}.."
+        sudo adduser ${USER}
+        sudo usermod -aG sudo ${USER}
+        su ${USER}
+        echo $USER
+    fi
 }
 
 function set_git_config() {
-  git config --global user.name "$(whoami)-$(uname -n)"
-  git config --global user.email "hujinlei1999@qq.com"
+    git config --global user.name "$(whoami)-$(uname -n)"
+    git config --global user.email "hujinlei1999@qq.com"
 }
 
 function install_packages() {
-  local apps=('git' 'cmake' 'g++' 'ssh' 'make' 'cmake' 'bat' 'zsh' 'iostat' 'sysstat' 'htop' 'ranger' 'fzf')
-  sudo apt update
-  for app in "${apps[@]}"; do
-    sudo apt-get install $(echo $app | sed 's/,//g') -y
-  done
-  # 设置 /home/hjl/.ssh/id_rsa 的权限
-  # chmod 600 /home/hjl/.ssh/id_rsa
+    local apps=('git' 'cmake' 'g++' 'ssh' 'make' 'cmake' 'bat' 'zsh' 'iostat' 'sysstat' 'htop' 'ranger' 'fzf')
+    sudo apt update
+    for app in "${apps[@]}"; do
+        sudo apt-get install $(echo $app | sed 's/,//g') -y
+    done
+    # 设置 /home/hjl/.ssh/id_rsa 的权限
+    # chmod 600 /home/hjl/.ssh/id_rsa
 }
 
 function setup_oh_my_zsh() {
-  local OMZ=~/.oh-my-zsh/
-  if [[ -d "${OMZ}" ]]; then
-    echo "${OMZ} Existed; Either delete or ignore it"
-  else
-    echo "Download ${OMZ}"
-    yes | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-  fi
+    local OMZ=~/.oh-my-zsh/
+    if [[ -d "${OMZ}" ]]; then
+        echo "${OMZ} Existed; Either delete or ignore it"
+    else
+        echo "Download ${OMZ}"
+        yes | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    fi
 }
 
 function set_default_editor() {
-  echo export EDITOR=/usr/bin/vim >>~/.bashrc
-  echo export EDITOR=/usr/bin/vim >>~/.zshrc
+    echo export EDITOR=/usr/bin/vim >>~/.bashrc
+    echo export EDITOR=/usr/bin/vim >>~/.zshrc
 }
 
 function config_zsh() {
-  ATS=${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-  if [[ -d "${ATS}" ]]; then
-    echo ${ATS} " Existed; Either delete or ignore it"
-  else
-    git clone https://github.com/zsh-users/zsh-autosuggestions ${ATS}
-  fi
-  SH=${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
-  if [[ -d "${SH}" ]]; then
-    echo ${SH} " Existed; Either delete or ignore it"
-  else
-    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${SH}
-  fi
+    ATS=${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    if [[ -d "${ATS}" ]]; then
+        echo ${ATS} " Existed; Either delete or ignore it"
+    else
+        git clone https://github.com/zsh-users/zsh-autosuggestions ${ATS}
+    fi
+    SH=${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+    if [[ -d "${SH}" ]]; then
+        echo ${SH} " Existed; Either delete or ignore it"
+    else
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${SH}
+    fi
 
-  # fzf is for the history command.
-  FZF="~/.fzf"
-  if [[ ! -d "${FZF}" ]]; then
-    git clone --depth=1 https://github.com/junegunn/fzf.git ${FZF}
-    ${FZF}/install
-    echo "NO fzf install it finished"
-  fi
+    # fzf is for the history command.
+    FZF="~/.fzf"
+    if [[ ! -d "${FZF}" ]]; then
+        git clone --depth=1 https://github.com/junegunn/fzf.git ${FZF}
+        ${FZF}/install
+        echo "NO fzf install it finished"
+    fi
+}
+
+function update_zshrc() {
+    URL="https://raw.githubusercontent.com/huqianshan/Scraps/refs/heads/main/Config/.zshrc"
+    curl -o ~/.zshrc ${URL}
+    source ~/.zshrc
 }
 
 # function config_ranger() {

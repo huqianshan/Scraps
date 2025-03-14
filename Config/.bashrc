@@ -22,8 +22,10 @@ alias branch="git branch -a"
 alias stash="git stash"
 
 # linux command
-alias la="ls -ah"
-alias ll="ls -lh"
+alias ll='ls -ahlF'
+alias la='ls -Ah'
+alias l='ls -CFh'
+alias iotop='sudo iotop'
 
 # ranger alias
 alias r="ranger"
