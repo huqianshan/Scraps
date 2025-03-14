@@ -108,7 +108,7 @@ alias targz="tar -xvf"
 alias off="sudo shutdown -h now"
 alias reboot="sudo reboot"
 # git alias
-alias clone="git clone"
+alias clone="git clone --depth=1"
 alias pull="git pull"
 alias push="git push"
 alias fetch="git fetch"
@@ -124,8 +124,17 @@ alias stash="git stash"
 alias la="ls -ah"
 alias ll="ls -lh"
 
+# ranger alias
+alias r="ranger"
+alias rr="ranger --choosedir=$HOME/.rangerdir; LASTDIR=$(cat $HOME/.rangerdir); cd '$LASTDIR'"
+
 # for anaconda python
 # export PATH="/home/hjl/anaconda3/bin:$PATH"
 export PATH="/home/hjl/.local/bin:$PATH"
+
 export FZF_CTRL_T_OPTS="--preview '(highlight -O ansi -l {} 2> /dev/null || batcat --color=always --style=numbers {} || tree -C {}) 2> /dev/null | head -200'"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# Set up fzf key bindings and fuzzy completion
+# source <(fzf --zsh)
+[[ -s /home/hjl/.autojump/etc/profile.d/autojump.sh ]] && source /home/hjl/.autojump/etc/profile.d/autojump.sh
+autoload -U compinit && compinit -u

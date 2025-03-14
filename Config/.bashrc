@@ -3,12 +3,13 @@ alias upgrade="sudo apt-get upgrade"
 alias install="sudo apt-get install"
 alias search="sudo apt-cache search"
 alias list="apt list --installed"
-alias autoremove="sudo apt autoremove"
+alias autorm="sudo apt autoremove"
+alias remove="sudo apt remove"
 alias targz="tar -xvf"
 alias off="sudo shutdown -h now"
 alias reboot="sudo reboot"
 # git alias
-alias clone="git clone"
+alias clone="git clone --depth=1"
 alias pull="git pull"
 alias push="git push"
 alias fetch="git fetch"
@@ -23,3 +24,7 @@ alias stash="git stash"
 # linux command
 alias la="ls -ah"
 alias ll="ls -lh"
+
+# ranger alias
+alias r="ranger"
+alias rr="ranger --choosedir=$HOME/.rangerdir; LASTDIR=$(cat $HOME/.rangerdir); cd '$LASTDIR'"
